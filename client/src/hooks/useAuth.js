@@ -6,7 +6,7 @@ export const useAuth = () => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch('http://localhost:8000/api/admin/me', {
+      const response = await fetch('/api/admin/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -1,69 +1,60 @@
-# React + TypeScript + Vite
+# Flower Management System - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## إعدادات الـ Proxy
 
-Currently, two official plugins are available:
+تم إعداد الـ proxy في `vite.config.ts` لربط الـ frontend مع الـ backend تلقائياً.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### إعدادات الـ Proxy:
+```typescript
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+      secure: false,
+      rewrite: (path) => path.replace(/^\/api/, '/api')
+    }
+  }
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## كيفية التشغيل
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. تشغيل الـ Backend أولاً:
+```bash
+cd ../server
+npm start
 ```
+
+### 2. تشغيل الـ Frontend:
+```bash
+npm run dev
+```
+
+الـ frontend سيعمل على `http://localhost:5173` وستتم توجيه جميع الـ API calls تلقائياً إلى `http://localhost:8000`.
+
+## الملفات المحدثة
+
+تم تحديث جميع الـ API calls في الملفات التالية لاستخدام الـ proxy:
+
+- `src/hooks/useAuth.js`
+- `src/hooks/useDashboard.ts`
+- `src/hooks/useExpenses.ts`
+- `src/hooks/useRevenues.ts`
+- `src/pages/Login.tsx`
+- `src/pages/Signup.tsx`
+
+## ملاحظات مهمة
+
+1. تأكد من أن الـ backend يعمل على المنفذ 8000
+2. جميع الـ API calls تستخدم الآن `/api/` بدلاً من `http://localhost:8000/api/`
+3. الـ proxy يعمل فقط في وضع التطوير (development)
+4. في الإنتاج، ستحتاج إلى إعداد الـ proxy على مستوى الخادم
+
+## البناء للإنتاج
+
+```bash
+npm run build
+```
+
+سيتم إنشاء الملفات في مجلد `dist/` جاهزة للنشر.

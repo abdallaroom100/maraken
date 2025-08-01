@@ -64,7 +64,7 @@ export const useDashboard = () => {
       if (filters.year) queryParams.append('year', filters.year.toString())
       if (filters.month) queryParams.append('month', filters.month.toString())
       queryParams.append('allData', 'true')
-      const url = `http://localhost:8000/api/dashboard/stats?${queryParams}`
+      const url = `/api/dashboard/stats?${queryParams}`
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -95,7 +95,7 @@ export const useDashboard = () => {
     try {
       const token = getToken()
       if (!token) return
-      const response = await fetch('http://localhost:8000/api/dashboard/admins', {
+      const response = await fetch('/api/dashboard/admins', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -155,10 +155,10 @@ export const useDashboard = () => {
       acc[r.type].count += 1
       return acc
     }, {} as any)) as Array<{ _id: string; total: number; count: number }>
-    // أحدث المعاملات
+
     const recentExpenses = [...filteredExpenses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
     const recentRevenues = [...filteredRevenues].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
-    // إحصائيات الأدمنين
+
     const adminStatsMap: any = {}
     filteredExpenses.forEach(e => {
       const id = e.adminId?.toString() || 'غير محدد'

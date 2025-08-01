@@ -28,7 +28,7 @@ export const useRevenues = () => {
       const admin = JSON.parse(adminData)
       const adminId = admin.id
       
-      const response = await fetch(`http://localhost:8000/api/revenues/${adminId}`, {
+      const response = await fetch(`/api/revenues/${adminId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
