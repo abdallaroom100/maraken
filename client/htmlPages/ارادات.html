@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>صفحة الإيرادات</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9faff;
+      color: #222;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #004080;
+      margin-bottom: 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    form {
+      margin-bottom: 25px;
+      background: #e3f0ff;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: #003366;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #004080;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #002b55;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #004080;
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: #d9534f;
+      border: none;
+      padding: 6px 10px;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-delete:hover {
+      background-color: #b52b27;
+    }
+
+    .total-income {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #004080;
+      text-align: right;
+    }
+
+    .explanation {
+      background: #dbe9f7;
+      border-left: 6px solid #004080;
+      padding: 15px 20px;
+      border-radius: 5px;
+      margin-top: 40px;
+      color: #003366;
+      font-size: 15px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    @media (max-width: 600px) {
+      body, .container {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>إدارة الإيرادات</h1>
+
+    <!-- نموذج إضافة إيراد جديد -->
+    <form id="incomeForm">
+      <label for="incomeDate">التاريخ</label>
+      <input type="date" id="incomeDate" required />
+
+      <label for="incomeType">نوع الإيراد</label>
+      <input type="text" id="incomeType" placeholder="مثلاً: مبيعات، خدمات، ... " required />
+
+      <label for="incomeAmount">المبلغ (ريال)</label>
+      <input type="number" id="incomeAmount" placeholder="أدخل المبلغ" min="0" step="0.01" required />
+
+      <label for="incomeDesc">وصف الإيراد (اختياري)</label>
+      <input type="text" id="incomeDesc" placeholder="مثلاً: بيع منتج معين" />
+
+      <button type="submit">إضافة الإيراد</button>
+    </form>
+
+    <!-- جدول عرض الإيرادات -->
+    <table>
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>نوع الإيراد</th>
+          <th>المبلغ (ريال)</th>
+          <th>الوصف</th>
+          <th>حذف</th>
+        </tr>
+      </thead>
+      <tbody id="incomeTableBody">
+        <!-- الإيرادات ستضاف هنا -->
+      </tbody>
+    </table>
+
+    <!-- إجمالي الإيرادات -->
+    <div class="total-income" id="totalIncome">إجمالي الإيرادات: 0 ريال</div>
+  </div>
+
+  <!-- شرح مفصل -->
+  <div class="explanation">
+    <h3>شرح مفصل لاستخدام صفحة الإيرادات:</h3>
+    <p>
+      هذه الصفحة تساعدك في إدارة جميع الإيرادات الخاصة بالشركة أو المشروع الخاص بك بشكل منظم وواضح.<br>
+      <strong>خطوات الاستخدام:</strong>
+      <ul>
+        <li>أدخل تاريخ الإيراد باستخدام حقل التاريخ.</li>
+        <li>حدد نوع الإيراد، مثل "مبيعات"، "خدمات"، أو أي نوع آخر.</li>
+        <li>أدخل مبلغ الإيراد بالريال السعودي.</li>
+        <li>يمكنك إضافة وصف بسيط للإيراد لمساعدتك في التوثيق.</li>
+        <li>اضغط على زر "إضافة الإيراد" لإضافة السجل إلى الجدول.</li>
+        <li>يمكنك حذف أي سجل إيراد بالضغط على زر "حذف" بجانب كل إيراد.</li>
+        <li>سيتم تحديث إجمالي الإيرادات تلقائياً أسفل الجدول.</li>
+      </ul>
+      هذه الطريقة تساعد في متابعة الإيرادات المالية بسهولة ودقة، مع توفير ملخص إجمالي واضح.
+    </p>
+  </div>
+
+  <script>
+    const incomeForm = document.getElementById("incomeForm");
+    const incomeTableBody = document.getElementById("incomeTableBody");
+    const totalIncomeDiv = document.getElementById("totalIncome");
+
+    let incomes = [];
+
+    // تحديث عرض الإيرادات في الجدول
+    function renderIncomes() {
+      // جلب الإيرادات من LocalStorage
+      let storedIncomes = JSON.parse(localStorage.getItem("incomes") || "[]");
+      incomes = storedIncomes;
+      incomeTableBody.innerHTML = "";
+
+      let total = 0;
+      incomes.forEach((income, index) => {
+        total += income.amount;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${income.date}</td>
+          <td>${income.type}</td>
+          <td>${income.amount.toFixed(2)}</td>
+          <td>${income.desc || "-"}</td>
+          <td><button class="btn-delete" onclick="deleteIncome(${index})">حذف</button></td>
+        `;
+        incomeTableBody.appendChild(tr);
+      });
+
+      totalIncomeDiv.textContent = `إجمالي الإيرادات: ${total.toFixed(2)} ريال`;
+    }
+
+    // حذف إيراد معين
+    function deleteIncome(index) {
+      if (confirm("هل تريد حذف هذا الإيراد؟")) {
+        // جلب الإيرادات من LocalStorage
+        let storedIncomes = JSON.parse(localStorage.getItem("incomes") || "[]");
+        storedIncomes.splice(index, 1);
+        localStorage.setItem("incomes", JSON.stringify(storedIncomes));
+        renderIncomes();
+      }
+    }
+
+    // معالجة إرسال النموذج
+    incomeForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const date = document.getElementById("incomeDate").value;
+      const type = document.getElementById("incomeType").value.trim();
+      const amount = parseFloat(document.getElementById("incomeAmount").value);
+      const desc = document.getElementById("incomeDesc").value.trim();
+
+      if (!date || !type || isNaN(amount) || amount <= 0) {
+        alert("من فضلك أدخل جميع البيانات المطلوبة بشكل صحيح.");
+        return;
+      }
+
+      // جلب الإيرادات من LocalStorage أو مصفوفة جديدة
+      let storedIncomes = JSON.parse(localStorage.getItem("incomes") || "[]");
+      storedIncomes.push({ date, type, amount, desc });
+      localStorage.setItem("incomes", JSON.stringify(storedIncomes));
+
+      // تنظيف النموذج
+      incomeForm.reset();
+
+      renderIncomes();
+    });
+
+    // بداية الصفحة - عرض جدول الإيرادات من LocalStorage
+    renderIncomes();
+  </script>
+
+</body>
+</html>

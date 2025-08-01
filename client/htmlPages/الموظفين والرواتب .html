@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>إدارة الموظفين والرواتب</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: #f0f4f8;
+    margin: 0; padding: 0;
+    direction: rtl;
+    color: #2c3e50;
+  }
+
+  h1 {
+    text-align: center;
+    margin: 30px 0 15px 0;
+    color: #34495e;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto 50px auto;
+    background: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      background-color:#dbe9f7;
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 18px 25px;
+    margin-bottom: 25px;
+  
+  }
+
+  label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  input[type="text"],
+  input[type="number"] {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #bdc3c7;
+    transition: border-color 0.3s ease;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus {
+    outline: none;
+    border-color: #2980b9;
+    box-shadow: 0 0 6px rgba(41, 128, 185, 0.4);
+  }
+
+  button.add-btn {
+    grid-column: 1 / -1;
+    background: #2980b9;
+    color: white;
+    padding: 14px 0;
+    font-weight: 700;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  button.add-btn:hover {
+    background: #1c5980;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+
+  th, td {
+    text-align: center;
+    padding: 14px 12px;
+    border-bottom: 1.5px solid #ecf0f1;
+  }
+
+  th {
+    background: #2980b9;
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  tbody tr:hover {
+    background: #f6f9fc;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  button.edit-btn,
+  button.delete-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.3s ease;
+  }
+
+  button.edit-btn {
+    background: #27ae60;
+    color: white;
+  }
+
+  button.edit-btn:hover {
+    background: #1e8449;
+  }
+
+  button.delete-btn {
+    background: #c0392b;
+    color: white;
+  }
+
+  button.delete-btn:hover {
+    background: #922b21;
+  }
+
+  .edit-mode {
+    background: #f9f9f9;
+    border: 2px solid #f39c12;
+    padding: 15px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    color: #d35400;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  @media (max-width: 580px) {
+    form {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <h1>إدارة الموظفين والرواتب</h1>
+
+  <div class="container">
+
+    <form id="employeeForm">
+      <div>
+        <label for="empName">اسم الموظف</label>
+        <input type="text" id="empName" placeholder="أدخل اسم الموظف" required />
+      </div>
+      <div>
+        <label for="empJob">الوظيفة</label>
+        <input type="text" id="empJob" placeholder="أدخل الوظيفة" required />
+      </div>
+      <div>
+        <label for="empSalary">الراتب الأساسي (ريال)</label>
+        <input type="number" id="empSalary" placeholder="0" min="0" required />
+      </div>
+      <div>
+        <label for="empAbsence">أيام الغياب</label>
+        <input type="number" id="empAbsence" placeholder="0" min="0" value="0" />
+      </div>
+      <div>
+        <label for="empBonus">الحوافز (ريال)</label>
+        <input type="number" id="empBonus" placeholder="0" min="0" value="0" />
+      </div>
+      <div>
+        <label for="empDeductions">الخصومات (ريال)</label>
+        <input type="number" id="empDeductions" placeholder="0" min="0" value="0" />
+      </div>
+      <div>
+        <label for="empWithdrawals">السحبيات (ريال)</label>
+        <input type="number" id="empWithdrawals" placeholder="0" min="0" value="0" />
+      </div>
+
+      <button type="submit" class="add-btn" id="submitBtn">إضافة موظف</button>
+    </form>
+
+    <div id="editWarning" class="edit-mode" style="display:none;">
+      تعديل موظف موجود - لا تنس حفظ التعديلات بالضغط على زر "تحديث"
+    </div>
+
+    <table id="employeesTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم الموظف</th>
+          <th>الوظيفة</th>
+          <th>الراتب الأساسي (ريال)</th>
+          <th>أيام الغياب</th>
+          <th>الحوافز (ريال)</th>
+          <th>الخصومات (ريال)</th>
+          <th>السحبيات (ريال)</th>
+          <th>الراتب الصافي (ريال)</th>
+          <th>العمليات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- بيانات الموظفين تظهر هنا -->
+      </tbody>
+    </table>
+
+    <!-- مربع مجموع الرواتب الصافية والأزرار -->
+    <div style="margin-top: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: flex-end;">
+      <div id="netSalariesSumBox" style="background: #eaf6fb; padding: 14px 22px; border-radius: 10px; font-size: 18px; font-weight: bold; color: #21618c;">
+        مجموع الرواتب الصافية: <span id="netSalariesSum">0</span> ريال
+      </div>
+      <button id="sendToExpenses" style="background: #f39c12; color: white; font-weight: bold; border: none; border-radius: 8px; padding: 12px 22px; font-size: 16px; cursor: pointer;">نقل للمصروفات</button>
+      <button id="printTable" style="background: #8e44ad; color: white; font-weight: bold; border: none; border-radius: 8px; padding: 12px 22px; font-size: 16px; cursor: pointer;">طباعة</button>
+    </div>
+
+    <!-- نافذة التعديل المنبثقة -->
+    <div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:white;padding:30px 20px;border-radius:12px;max-width:400px;width:95%;margin:auto;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+        <button id="closeEditModal" style="position:absolute;left:10px;top:10px;font-size:20px;background:none;border:none;cursor:pointer;">&times;</button>
+        <h2 style="text-align:center;margin-bottom:18px;">تعديل بيانات الموظف</h2>
+        <form id="editEmployeeForm">
+          <div style="margin-bottom:10px;">
+            <label>اسم الموظف</label>
+            <input type="text" id="editEmpName" required style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label>الوظيفة</label>
+            <input type="text" id="editEmpJob" required style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label>الراتب الأساسي (ريال)</label>
+            <input type="number" id="editEmpSalary" required min="0" style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label>أيام الغياب</label>
+            <input type="number" id="editEmpAbsence" min="0" value="0" style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label>الحوافز (ريال)</label>
+            <input type="number" id="editEmpBonus" min="0" value="0" style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label>الخصومات (ريال)</label>
+            <input type="number" id="editEmpDeductions" min="0" value="0" style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <div style="margin-bottom:18px;">
+            <label>السحبيات (ريال)</label>
+            <input type="number" id="editEmpWithdrawals" min="0" value="0" style="width:100%;padding:8px;border-radius:7px;border:1.2px solid #ccc;" />
+          </div>
+          <button type="submit" style="width:100%;background:#2980b9;color:white;padding:12px 0;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;">حفظ التعديلات</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const form = document.getElementById('employeeForm');
+  const empName = document.getElementById('empName');
+  const empJob = document.getElementById('empJob');
+  const empSalary = document.getElementById('empSalary');
+  const empAbsence = document.getElementById('empAbsence');
+  const empBonus = document.getElementById('empBonus');
+  const empDeductions = document.getElementById('empDeductions');
+  const empWithdrawals = document.getElementById('empWithdrawals');
+  const employeesTableBody = document.querySelector('#employeesTable tbody');
+  const editWarning = document.getElementById('editWarning');
+  const submitBtn = document.getElementById('submitBtn');
+
+  let employees = [];
+  let editIndex = -1;
+
+  // استرجاع البيانات من Local Storage عند تحميل الصفحة
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedEmployees = localStorage.getItem('employees');
+    if (savedEmployees) {
+      employees = JSON.parse(savedEmployees);
+      renderTable();
+    }
+  });
+
+  // دالة لحفظ البيانات في Local Storage
+  function saveEmployeesToLocalStorage() {
+    localStorage.setItem('employees', JSON.stringify(employees));
+  }
+
+  function calcNetSalary(salary, absence, bonus, deductions, withdrawals) {
+    const deductionForAbsence = (salary / 30) * absence;
+    return salary - deductionForAbsence + bonus - deductions - withdrawals;
+  }
+
+  function renderTable() {
+    employeesTableBody.innerHTML = '';
+    let netSalariesSum = 0;
+    employees.forEach((emp, index) => {
+      const netSalary = calcNetSalary(emp.salary, emp.absence, emp.bonus, emp.deductions, emp.withdrawals).toFixed(2);
+      netSalariesSum += parseFloat(netSalary);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${emp.name}</td>
+        <td>${emp.job}</td>
+        <td>${emp.salary.toLocaleString()}</td>
+        <td>${emp.absence}</td>
+        <td>${emp.bonus.toLocaleString()}</td>
+        <td>${emp.deductions.toLocaleString()}</td>
+        <td>${emp.withdrawals.toLocaleString()}</td>
+        <td>${netSalary}</td>
+        <td>
+          <div class="btn-group">
+            <button class="edit-btn" onclick="editEmployee(${index})">تعديل</button>
+            <button class="delete-btn" onclick="deleteEmployee(${index})">حذف</button>
+          </div>
+        </td>
+      `;
+      employeesTableBody.appendChild(row);
+    });
+    // تحديث مجموع الرواتب الصافية
+    document.getElementById('netSalariesSum').textContent = netSalariesSum.toLocaleString(undefined, {maximumFractionDigits: 2});
+  }
+
+  function resetForm() {
+    form.reset();
+    editIndex = -1;
+    submitBtn.textContent = 'إضافة موظف';
+    editWarning.style.display = 'none';
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const newEmp = {
+      name: empName.value.trim(),
+      job: empJob.value.trim(),
+      salary: Number(empSalary.value),
+      absence: Number(empAbsence.value) || 0,
+      bonus: Number(empBonus.value) || 0,
+      deductions: Number(empDeductions.value) || 0,
+      withdrawals: Number(empWithdrawals.value) || 0,
+    };
+
+    if (editIndex === -1) {
+      employees.push(newEmp);
+    } else {
+      employees[editIndex] = newEmp;
+    }
+
+    saveEmployeesToLocalStorage(); // حفظ بعد الإضافة أو التعديل
+    renderTable();
+    resetForm();
+  });
+
+  function deleteEmployee(index) {
+    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+      employees.splice(index, 1);
+      saveEmployeesToLocalStorage(); // حفظ بعد الحذف
+      renderTable();
+      resetForm();
+    }
+  }
+
+  function editEmployee(index) {
+    const emp = employees[index];
+    // تعبئة بيانات الموظف في النافذة المنبثقة
+    document.getElementById('editEmpName').value = emp.name;
+    document.getElementById('editEmpJob').value = emp.job;
+    document.getElementById('editEmpSalary').value = emp.salary;
+    document.getElementById('editEmpAbsence').value = emp.absence;
+    document.getElementById('editEmpBonus').value = emp.bonus;
+    document.getElementById('editEmpDeductions').value = emp.deductions;
+    document.getElementById('editEmpWithdrawals').value = emp.withdrawals;
+    // عرض النافذة المنبثقة
+    document.getElementById('editModal').style.display = 'flex';
+    // حفظ رقم الموظف الجاري تعديله
+    editIndex = index;
+  }
+
+  // إغلاق النافذة المنبثقة
+  document.getElementById('closeEditModal').onclick = function() {
+    document.getElementById('editModal').style.display = 'none';
+    editIndex = -1;
+  };
+
+  // عند حفظ التعديلات من النافذة المنبثقة
+  document.getElementById('editEmployeeForm').onsubmit = function(e) {
+    e.preventDefault();
+    if (editIndex !== -1) {
+      employees[editIndex] = {
+        name: document.getElementById('editEmpName').value.trim(),
+        job: document.getElementById('editEmpJob').value.trim(),
+        salary: Number(document.getElementById('editEmpSalary').value),
+        absence: Number(document.getElementById('editEmpAbsence').value) || 0,
+        bonus: Number(document.getElementById('editEmpBonus').value) || 0,
+        deductions: Number(document.getElementById('editEmpDeductions').value) || 0,
+        withdrawals: Number(document.getElementById('editEmpWithdrawals').value) || 0,
+      };
+      saveEmployeesToLocalStorage();
+      renderTable();
+      document.getElementById('editModal').style.display = 'none';
+      editIndex = -1;
+    }
+  };
+
+  // زر نقل للمصروفات
+  document.getElementById('sendToExpenses').onclick = function() {
+    const sum = document.getElementById('netSalariesSum').textContent.replace(/,/g, '');
+    localStorage.setItem('رواتب_عمال', sum);
+    window.location.href = 'مصروفات.html';
+  };
+
+  // زر الطباعة
+  document.getElementById('printTable').onclick = function() {
+    // إنشاء نافذة جديدة للطباعة
+    const printWindow = window.open('', '', 'width=1000,height=700');
+    const tableHtml = document.getElementById('employeesTable').outerHTML;
+    const sumHtml = document.getElementById('netSalariesSumBox').outerHTML;
+    printWindow.document.write(`
+      <html lang="ar" dir="rtl">
+      <head>
+        <title>طباعة جدول الموظفين والرواتب</title>
+        <style>
+          body { font-family: 'Cairo', sans-serif; direction: rtl; background: #111; color: #fff; }
+          .logo-box { text-align: center; margin-bottom: 18px; }
+          .logo-box img { max-width: 120px; margin-bottom: 8px; background: #fff; border-radius: 16px; padding: 8px; box-shadow: 0 0 8px #222; }
+          h2 { text-align: center; color: #2980b9; margin-bottom: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); background: #222; }
+          th, td { border: 1.5px solid #2980b9; text-align: center; padding: 12px; }
+          th { background: #2980b9; color: #fff; font-weight: 700; }
+          td { color: #fff; background: #222; }
+          tbody tr:nth-child(even) { background: #222; }
+          tbody tr:nth-child(odd) { background: #181c22; }
+          .sum-box, #netSalariesSumBox { margin: 20px 0; font-size: 18px; font-weight: bold; color: #2980b9; background: #fff; padding: 14px 22px; border-radius: 10px; display: inline-block; }
+        </style>
+      </head>
+      <body>
+        <div class="logo-box">
+          <img src="img/15848176933.png" alt="لوجو مراكن الورد" />
+        </div>
+        <h2>جدول الموظفين والرواتب</h2>
+        ${tableHtml}
+        <div class="sum-box">${sumHtml}</div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+  };
+</script>
+
+<!-- تحميل مكتبة jsPDF وautoTable من CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>صفحة المصروفات</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9faff;
+      color: #222;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #004080;
+      margin-bottom: 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    form {
+      margin-bottom: 25px;
+      background: #e3f0ff;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: #003366;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #004080;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #002b55;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #004080;
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: #d9534f;
+      border: none;
+      padding: 6px 10px;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-delete:hover {
+      background-color: #b52b27;
+    }
+
+    .total-expenses {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #004080;
+      text-align: right;
+    }
+
+    /* شرح */
+    .explanation {
+      background: #dbe9f7;
+      border-left: 6px solid #004080;
+      padding: 15px 20px;
+      border-radius: 5px;
+      margin-top: 40px;
+      color: #003366;
+      font-size: 15px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    @media (max-width: 600px) {
+      body, .container {
+        padding: 10px;
+      }
+    }
+
+    /* نافذة التعديل المنبثقة */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.35);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: #fff;
+      padding: 24px 16px 12px 16px;
+      border-radius: 12px;
+      max-width: 350px;
+      width: 95%;
+      margin: auto;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-close {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .modal-content h2 {
+      text-align: center;
+      margin-bottom: 12px;
+      color: #2980b9;
+      font-size: 20px;
+    }
+    .modal-content label {
+      display: block;
+      margin: 8px 0 3px 0;
+      font-weight: 600;
+      color: #003366;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1.2px solid #ccc;
+      margin-bottom: 7px;
+      font-size: 15px;
+    }
+    .modal-save {
+      width: 100%;
+      background: #2980b9;
+      color: white;
+      padding: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>إدارة المصروفات</h1>
+
+    <!-- نموذج إضافة مصروف جديد -->
+    <form id="expenseForm">
+      <label for="expenseDate">التاريخ</label>
+      <input type="date" id="expenseDate" required />
+
+      <label for="expenseType">نوع المصروف</label>
+      <input type="text" id="expenseType" placeholder="مثلاً: إيجار، كهرباء، رواتب، ... " required />
+
+      <label for="expenseAmount">المبلغ (ريال)</label>
+      <input type="number" id="expenseAmount" placeholder="أدخل المبلغ" min="0" step="0.01" required />
+
+      <label for="expenseDesc">وصف المصروف (اختياري)</label>
+      <input type="text" id="expenseDesc" placeholder="مثلاً: إيجار المكتب لشهر يونيو" />
+
+      <button type="submit">إضافة المصروف</button>
+    </form>
+
+    <!-- جدول عرض المصروفات -->
+    <button id="printExpenses" style="background: #8e44ad; color: white; font-weight: bold; border: none; border-radius: 8px; padding: 10px 22px; font-size: 16px; cursor: pointer; margin-bottom: 15px;">طباعة</button>
+    <table>
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>نوع المصروف</th>
+          <th>المبلغ (ريال)</th>
+          <th>الوصف</th>
+          <th>حذف</th>
+          <th>تعديل</th>
+        </tr>
+      </thead>
+      <tbody id="expensesTableBody">
+        <!-- المصروفات ستضاف هنا -->
+      </tbody>
+    </table>
+
+    <!-- إجمالي المصروفات -->
+    <div class="total-expenses" id="totalExpenses">إجمالي المصروفات: 0 ريال</div>
+  </div>
+
+  <!-- شرح مفصل -->
+  <div class="explanation">
+    <h3>شرح مفصل لاستخدام صفحة المصروفات:</h3>
+    <p>
+      هذه الصفحة تساعدك في إدارة جميع المصروفات الخاصة بالشركة أو المشروع الخاص بك بشكل منظم وواضح.<br>
+      <strong>خطوات الاستخدام:</strong>
+      <ul>
+        <li>أدخل تاريخ المصروف باستخدام حقل التاريخ.</li>
+        <li>حدد نوع المصروف، مثل "إيجار"، "كهرباء"، "رواتب"، أو أي نوع آخر.</li>
+        <li>أدخل مبلغ المصروف بالريال السعودي.</li>
+        <li>يمكنك إضافة وصف بسيط للمصروف لمساعدتك في التوثيق.</li>
+        <li>اضغط على زر "إضافة المصروف" لإضافة السجل إلى الجدول.</li>
+        <li>يمكنك حذف أي سجل مصروف بالضغط على زر "حذف" بجانب كل مصروف.</li>
+        <li>سيتم تحديث إجمالي المصروفات تلقائياً أسفل الجدول.</li>
+      </ul>
+      هذه الطريقة تساعد في متابعة المصروفات المالية بسهولة ودقة، مع توفير ملخص إجمالي واضح.
+    </p>
+  </div>
+
+  <!-- نافذة التعديل المنبثقة -->
+  <div id="editExpenseModal" class="modal-overlay">
+    <div class="modal-content">
+      <button id="closeEditExpenseModal" class="modal-close">&times;</button>
+      <h2>تعديل المصروف</h2>
+      <form id="editExpenseForm">
+        <label>التاريخ</label>
+        <input type="date" id="editExpenseDate" required />
+        <label>نوع المصروف</label>
+        <input type="text" id="editExpenseType" required />
+        <label>المبلغ (ريال)</label>
+        <input type="number" id="editExpenseAmount" required min="0" />
+        <label>الوصف</label>
+        <input type="text" id="editExpenseDesc" />
+        <button type="submit" class="modal-save">حفظ التعديلات</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const expenseForm = document.getElementById("expenseForm");
+    const expensesTableBody = document.getElementById("expensesTableBody");
+    const totalExpensesDiv = document.getElementById("totalExpenses");
+
+    let expenses = [];
+
+    // تحديث عرض المصروفات في الجدول
+    function renderExpenses() {
+      // جلب المصروفات من LocalStorage
+      let storedExpenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+      expenses = storedExpenses;
+      let html = "";
+      let total = 0;
+      for (let i = 0; i < expenses.length; i++) {
+        const expense = expenses[i];
+        total += expense.amount;
+        html += `<tr>
+          <td>${expense.date}</td>
+          <td>${expense.type}</td>
+          <td>${expense.amount.toFixed(2)}</td>
+          <td>${expense.desc || "-"}</td>
+          <td><button class='btn-delete' onclick='deleteExpense(${i})'>حذف</button></td>
+          <td><button class='btn-edit' onclick='editExpense(${i})'>تعديل</button></td>
+        </tr>`;
+      }
+      expensesTableBody.innerHTML = html;
+      totalExpensesDiv.textContent = `إجمالي المصروفات: ${total.toFixed(2)} ريال`;
+    }
+
+    // حذف مصروف معين
+    function deleteExpense(index) {
+      if (confirm("هل تريد حذف هذا المصروف؟")) {
+        // جلب المصروفات من LocalStorage
+        let storedExpenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+        storedExpenses.splice(index, 1);
+        localStorage.setItem("expenses", JSON.stringify(storedExpenses));
+        renderExpenses();
+      }
+    }
+
+    // معالجة إرسال النموذج
+    expenseForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const date = document.getElementById("expenseDate").value;
+      const type = document.getElementById("expenseType").value.trim();
+      const amount = parseFloat(document.getElementById("expenseAmount").value);
+      const desc = document.getElementById("expenseDesc").value.trim();
+
+      if (!date || !type || isNaN(amount) || amount <= 0) {
+        alert("من فضلك أدخل جميع البيانات المطلوبة بشكل صحيح.");
+        return;
+      }
+
+      // جلب المصروفات من LocalStorage أو مصفوفة جديدة
+      let storedExpenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+      storedExpenses.push({ date, type, amount, desc });
+      localStorage.setItem("expenses", JSON.stringify(storedExpenses));
+
+      // تنظيف النموذج
+      expenseForm.reset();
+
+      // الانتقال تلقائياً إلى صفحة الميزانية
+      renderExpenses();
+    });
+
+    // بداية الصفحة - عرض جدول المصروفات من LocalStorage
+    // إضافة بند رواتب الشهر تلقائياً إذا وجد في LocalStorage
+    (function addSalariesExpenseIfExists() {
+      const salaries = localStorage.getItem('رواتب_عمال');
+      if (salaries) {
+        // جلب مصروفات حالية
+        let storedExpenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+        // إضافة بند رواتب الشهر بتاريخ اليوم
+        const today = new Date();
+        const dateStr = today.toISOString().slice(0, 10);
+        storedExpenses.unshift({
+          date: dateStr,
+          type: 'رواتب الشهر',
+          amount: parseFloat(salaries),
+          desc: ''
+        });
+        localStorage.setItem('expenses', JSON.stringify(storedExpenses));
+        localStorage.removeItem('رواتب_عمال');
+      }
+    })();
+    renderExpenses();
+
+    // زر طباعة المصروفات
+    document.getElementById('printExpenses').onclick = function() {
+      const printWindow = window.open('', '', 'width=1000,height=700');
+      const tableHtml = document.querySelector('.container table').outerHTML;
+      const totalHtml = document.getElementById('totalExpenses').outerHTML;
+      printWindow.document.write(`
+        <html lang="ar" dir="rtl">
+        <head>
+          <title>طباعة المصروفات</title>
+          <style>
+            body { font-family: 'Cairo', sans-serif; direction: rtl; background: #f9faff; color: #222; }
+            .logo-box { text-align: center; margin-bottom: 18px; }
+            .logo-box img { max-width: 120px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto; }
+            h2 { text-align: center; color: #004080; margin-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+            th, td { border: 1.5px solid #ddd; text-align: center; padding: 12px; }
+            th { background: #004080; color: white; font-weight: 700; }
+            tbody tr:nth-child(even) { background: #e3f0ff; }
+            .total-expenses { margin-top: 20px; font-weight: bold; font-size: 18px; color: #004080; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="logo-box">
+            <img src="img/15848176933.png" alt="لوجو مراكن الورد" />
+          </div>
+          <h2>جدول المصروفات</h2>
+          ${tableHtml}
+          ${totalHtml}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+    };
+
+    // منطق التعديل
+    let editExpenseIndex = -1;
+    function editExpense(index) {
+      const expense = expenses[index];
+      document.getElementById('editExpenseDate').value = expense.date;
+      document.getElementById('editExpenseType').value = expense.type;
+      document.getElementById('editExpenseAmount').value = expense.amount;
+      document.getElementById('editExpenseDesc').value = expense.desc || '';
+      document.getElementById('editExpenseModal').classList.add('active');
+      editExpenseIndex = index;
+    }
+    window.editExpense = editExpense;
+    document.getElementById('closeEditExpenseModal').onclick = function() {
+      document.getElementById('editExpenseModal').classList.remove('active');
+      editExpenseIndex = -1;
+    };
+    document.getElementById('editExpenseForm').onsubmit = function(e) {
+      e.preventDefault();
+      if (editExpenseIndex !== -1) {
+        let storedExpenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+        storedExpenses[editExpenseIndex] = {
+          date: document.getElementById('editExpenseDate').value,
+          type: document.getElementById('editExpenseType').value.trim(),
+          amount: parseFloat(document.getElementById('editExpenseAmount').value),
+          desc: document.getElementById('editExpenseDesc').value.trim()
+        };
+        localStorage.setItem('expenses', JSON.stringify(storedExpenses));
+        renderExpenses();
+        document.getElementById('editExpenseModal').classList.remove('active');
+        editExpenseIndex = -1;
+      }
+    };
+  </script>
+
+</body>
+</html>

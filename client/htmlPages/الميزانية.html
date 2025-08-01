@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>صفحة الميزانية - إضافة وتعديل وحذف وطباعة</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #004080;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      color: #004080;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #055eb8;
+      padding-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+         background-color:#dbe9f7;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #004080;
+      color: white;
+    }
+    input[type="text"], input[type="number"], input[type="date"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px;
+      font-size: 14px;
+    }
+    .btn {
+      background-color: #004080;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 2px;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #003366;
+    }
+    .btn-delete {
+      background-color: #d9534f;
+    }
+    .btn-delete:hover {
+      background-color: #b52b27;
+    }
+    .btn-print {
+      background-color: #004080;
+      float: left;
+      margin-top: -50px;
+    }
+    .summary {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 30px;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #dbe9f7;
+      color: #004080;
+      clear: both;
+    }
+    .summary.loss {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    @media (max-width: 600px) {
+      body, .container {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>صفحة الميزانية</h1>
+    <button class="btn" style="margin-bottom:20px;float:left" onclick="exportAllData()">حفظ جميع الإيرادات والمصروفات</button>
+
+    <!-- قسم الإيرادات -->
+    <div class="section" id="income-section">
+      <h2>الإيرادات
+        <button class="btn btn-print" onclick="window.print()">طباعة الصفحة</button>
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>نوع الإيراد</th>
+            <th>المبلغ (ريال)</th>
+            <th>الوصف</th>
+            <th>تعديل</th>
+            <th>حذف</th>
+          </tr>
+          <tr>
+            <td><input type="date" id="income-date" /></td>
+            <td><input type="text" id="income-type" placeholder="نوع الإيراد" /></td>
+            <td><input type="number" id="income-amount" placeholder="المبلغ" /></td>
+            <td><input type="text" id="income-desc" placeholder="الوصف" /></td>
+            <td colspan="2"><button class="btn" onclick="addIncome()">إضافة</button></td>
+          </tr>
+        </thead>
+        <tbody id="incomeTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- قسم المصروفات -->
+    <div class="section" id="expenses-section">
+      <h2>المصروفات</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>نوع المصروف</th>
+            <th>المبلغ (ريال)</th>
+            <th>الوصف</th>
+            <th>تعديل</th>
+            <th>حذف</th>
+          </tr>
+          <tr>
+            <td><input type="date" id="expense-date" /></td>
+            <td><input type="text" id="expense-type" placeholder="نوع المصروف" /></td>
+            <td><input type="number" id="expense-amount" placeholder="المبلغ" /></td>
+            <td><input type="text" id="expense-desc" placeholder="الوصف" /></td>
+            <td colspan="2"><button class="btn" onclick="addExpense()">إضافة</button></td>
+          </tr>
+        </thead>
+        <tbody id="expensesTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ملخص الميزانية -->
+    <div id="budgetSummary" class="summary">
+      صافي الميزانية: 0 ريال
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // --- الإيرادات ---
+    let incomes = [];
+    let editingIncomeIndex = null;
+    // --- المصروفات ---
+    let expenses = [];
+    let editingExpenseIndex = null;
+
+    const incomeTableBody = document.getElementById("incomeTableBody");
+    const expensesTableBody = document.getElementById("expensesTableBody");
+    const budgetSummary = document.getElementById("budgetSummary");
+
+    // تحميل الإيرادات من LocalStorage إذا وجدت
+    function loadIncomesFromStorage() {
+      const stored = localStorage.getItem("incomes");
+      if (stored) {
+        incomes = JSON.parse(stored);
+      }
+    }
+    // حفظ الإيرادات في LocalStorage
+    function saveIncomesToStorage() {
+      localStorage.setItem("incomes", JSON.stringify(incomes));
+    }
+    // تحميل المصروفات من LocalStorage إذا وجدت
+    function loadExpensesFromStorage() {
+      const stored = localStorage.getItem("expenses");
+      if (stored) {
+        expenses = JSON.parse(stored);
+      }
+    }
+    // حفظ المصروفات في LocalStorage
+    function saveExpensesToStorage() {
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+    }
+
+    function renderTable() {
+      incomeTableBody.innerHTML = "";
+      incomes.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.date}</td>
+          <td>${item.type}</td>
+          <td>${item.amount.toFixed(2)}</td>
+          <td>${item.desc || "-"}</td>
+          <td><button class="btn" onclick="editIncome(${i})">تعديل</button></td>
+          <td><button class="btn btn-delete" onclick="deleteIncome(${i})">حذف</button></td>
+        `;
+        incomeTableBody.appendChild(tr);
+      });
+
+      expensesTableBody.innerHTML = "";
+      expenses.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.date}</td>
+          <td>${item.type}</td>
+          <td>${item.amount.toFixed(2)}</td>
+          <td>${item.desc || "-"}</td>
+          <td><button class="btn" onclick="editExpense(${i})">تعديل</button></td>
+          <td><button class="btn btn-delete" onclick="deleteExpense(${i})">حذف</button></td>
+        `;
+        expensesTableBody.appendChild(tr);
+      });
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const totalIncome = incomes.reduce((acc, cur) => acc + cur.amount, 0);
+      const totalExpenses = expenses.reduce((acc, cur) => acc + cur.amount, 0);
+      const net = totalIncome - totalExpenses;
+      budgetSummary.textContent = `صافي الميزانية: ${net.toFixed(2)} ريال`;
+      if (net < 0) {
+        budgetSummary.classList.add("loss");
+      } else {
+        budgetSummary.classList.remove("loss");
+      }
+    }
+
+    function clearIncomeInputs() {
+      document.getElementById("income-date").value = "";
+      document.getElementById("income-type").value = "";
+      document.getElementById("income-amount").value = "";
+      document.getElementById("income-desc").value = "";
+      editingIncomeIndex = null;
+    }
+    function clearExpenseInputs() {
+      document.getElementById("expense-date").value = "";
+      document.getElementById("expense-type").value = "";
+      document.getElementById("expense-amount").value = "";
+      document.getElementById("expense-desc").value = "";
+      editingExpenseIndex = null;
+    }
+
+    // إضافة أو تعديل إيراد
+    function addIncome() {
+      const date = document.getElementById("income-date").value;
+      const type = document.getElementById("income-type").value.trim();
+      const amount = parseFloat(document.getElementById("income-amount").value);
+      const desc = document.getElementById("income-desc").value.trim();
+      if (!date || !type || isNaN(amount) || amount <= 0) {
+        alert("يرجى إدخال جميع الحقول بشكل صحيح في الإيرادات.");
+        return;
+      }
+      if (editingIncomeIndex === null) {
+        incomes.push({ date, type, amount, desc });
+      } else {
+        incomes[editingIncomeIndex] = { date, type, amount, desc };
+      }
+      saveIncomesToStorage();
+      clearIncomeInputs();
+      renderTable();
+    }
+    // حذف إيراد
+    function deleteIncome(index) {
+      if (confirm("هل تريد حذف هذا الإيراد؟")) {
+        incomes.splice(index, 1);
+        saveIncomesToStorage();
+        if(editingIncomeIndex === index) clearIncomeInputs();
+        renderTable();
+      }
+    }
+    // نافذة منبثقة لتعديل الإيراد
+    function showEditIncomePopup(index) {
+      const income = incomes[index];
+      const popupBg = document.createElement('div');
+      popupBg.style.position = 'fixed';
+      popupBg.style.top = 0;
+      popupBg.style.left = 0;
+      popupBg.style.width = '100vw';
+      popupBg.style.height = '100vh';
+      popupBg.style.background = 'rgba(0,0,0,0.3)';
+      popupBg.style.display = 'flex';
+      popupBg.style.alignItems = 'center';
+      popupBg.style.justifyContent = 'center';
+      popupBg.style.zIndex = 1000;
+      const popup = document.createElement('div');
+      popup.style.background = '#fff';
+      popup.style.padding = '30px 20px';
+      popup.style.borderRadius = '10px';
+      popup.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+      popup.style.minWidth = '300px';
+      popup.innerHTML = `
+        <h3 style="margin-top:0">تعديل الإيراد</h3>
+        <label>التاريخ</label>
+        <input type="date" id="edit-income-date" value="${income.date}" style="width:100%;margin-bottom:10px" />
+        <label>نوع الإيراد</label>
+        <input type="text" id="edit-income-type" value="${income.type}" style="width:100%;margin-bottom:10px" />
+        <label>المبلغ (ريال)</label>
+        <input type="number" id="edit-income-amount" value="${income.amount}" style="width:100%;margin-bottom:10px" />
+        <label>الوصف</label>
+        <input type="text" id="edit-income-desc" value="${income.desc || ''}" style="width:100%;margin-bottom:10px" />
+        <div style="text-align:left;margin-top:15px">
+          <button id="saveEditIncomeBtn" class="btn">حفظ</button>
+          <button id="cancelEditIncomeBtn" class="btn btn-delete" style="margin-right:10px">إلغاء</button>
+        </div>
+      `;
+      popupBg.appendChild(popup);
+      document.body.appendChild(popupBg);
+      document.getElementById('cancelEditIncomeBtn').onclick = function() {
+        document.body.removeChild(popupBg);
+      };
+      document.getElementById('saveEditIncomeBtn').onclick = function() {
+        const newDate = document.getElementById('edit-income-date').value;
+        const newType = document.getElementById('edit-income-type').value.trim();
+        const newAmount = parseFloat(document.getElementById('edit-income-amount').value);
+        const newDesc = document.getElementById('edit-income-desc').value.trim();
+        if (!newDate || !newType || isNaN(newAmount) || newAmount <= 0) {
+          alert('يرجى إدخال جميع البيانات بشكل صحيح.');
+          return;
+        }
+        incomes[index] = { date: newDate, type: newType, amount: newAmount, desc: newDesc };
+        saveIncomesToStorage();
+        renderTable();
+        document.body.removeChild(popupBg);
+      };
+    }
+    // تعديل دالة editIncome لتستخدم النافذة المنبثقة
+    function editIncome(index) {
+      showEditIncomePopup(index);
+    }
+    // --- المصروفات (بدون تغيير) ---
+    function showEditExpensePopup(index) {
+      const expense = expenses[index];
+      const popupBg = document.createElement('div');
+      popupBg.style.position = 'fixed';
+      popupBg.style.top = 0;
+      popupBg.style.left = 0;
+      popupBg.style.width = '100vw';
+      popupBg.style.height = '100vh';
+      popupBg.style.background = 'rgba(0,0,0,0.3)';
+      popupBg.style.display = 'flex';
+      popupBg.style.alignItems = 'center';
+      popupBg.style.justifyContent = 'center';
+      popupBg.style.zIndex = 1000;
+      const popup = document.createElement('div');
+      popup.style.background = '#fff';
+      popup.style.padding = '30px 20px';
+      popup.style.borderRadius = '10px';
+      popup.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+      popup.style.minWidth = '300px';
+      popup.innerHTML = `
+        <h3 style="margin-top:0">تعديل المصروف</h3>
+        <label>التاريخ</label>
+        <input type="date" id="edit-expense-date" value="${expense.date}" style="width:100%;margin-bottom:10px" />
+        <label>نوع المصروف</label>
+        <input type="text" id="edit-expense-type" value="${expense.type}" style="width:100%;margin-bottom:10px" />
+        <label>المبلغ (ريال)</label>
+        <input type="number" id="edit-expense-amount" value="${expense.amount}" style="width:100%;margin-bottom:10px" />
+        <label>الوصف</label>
+        <input type="text" id="edit-expense-desc" value="${expense.desc || ''}" style="width:100%;margin-bottom:10px" />
+        <div style="text-align:left;margin-top:15px">
+          <button id="saveEditExpenseBtn" class="btn">حفظ</button>
+          <button id="cancelEditExpenseBtn" class="btn btn-delete" style="margin-right:10px">إلغاء</button>
+        </div>
+      `;
+      popupBg.appendChild(popup);
+      document.body.appendChild(popupBg);
+      document.getElementById('cancelEditExpenseBtn').onclick = function() {
+        document.body.removeChild(popupBg);
+      };
+      document.getElementById('saveEditExpenseBtn').onclick = function() {
+        const newDate = document.getElementById('edit-expense-date').value;
+        const newType = document.getElementById('edit-expense-type').value.trim();
+        const newAmount = parseFloat(document.getElementById('edit-expense-amount').value);
+        const newDesc = document.getElementById('edit-expense-desc').value.trim();
+        if (!newDate || !newType || isNaN(newAmount) || newAmount <= 0) {
+          alert('يرجى إدخال جميع البيانات بشكل صحيح.');
+          return;
+        }
+        expenses[index] = { date: newDate, type: newType, amount: newAmount, desc: newDesc };
+        saveExpensesToStorage();
+        renderTable();
+        document.body.removeChild(popupBg);
+      };
+    }
+    function editExpense(index) {
+      showEditExpensePopup(index);
+    }
+    function addExpense() {
+      const date = document.getElementById("expense-date").value;
+      const type = document.getElementById("expense-type").value.trim();
+      const amount = parseFloat(document.getElementById("expense-amount").value);
+      const desc = document.getElementById("expense-desc").value.trim();
+      if (!date || !type || isNaN(amount) || amount <= 0) {
+        alert("يرجى إدخال جميع الحقول بشكل صحيح في المصروفات.");
+        return;
+      }
+      expenses.push({ date, type, amount, desc });
+      saveExpensesToStorage();
+      clearExpenseInputs();
+      renderTable();
+    }
+    function deleteExpense(index) {
+      if (confirm("هل تريد حذف هذا المصروف؟")) {
+        expenses.splice(index, 1);
+        saveExpensesToStorage();
+        renderTable();
+      }
+    }
+    // عند تحميل الصفحة
+    loadIncomesFromStorage();
+    loadExpensesFromStorage();
+    renderTable();
+
+    // دالة تصدير جميع الإيرادات والمصروفات إلى ملف Excel
+    function exportAllData() {
+      // تجهيز بيانات الإيرادات
+      const incomeSheet = [
+        ["التاريخ", "نوع الإيراد", "المبلغ (ريال)", "الوصف"]
+      ];
+      incomes.forEach(i => {
+        incomeSheet.push([i.date, i.type, i.amount, i.desc || "-"]);
+      });
+      // تجهيز بيانات المصروفات
+      const expenseSheet = [
+        ["التاريخ", "نوع المصروف", "المبلغ (ريال)", "الوصف"]
+      ];
+      expenses.forEach(e => {
+        expenseSheet.push([e.date, e.type, e.amount, e.desc || "-"]);
+      });
+      // إنشاء ملف Excel متعدد الأوراق
+      const wb = XLSX.utils.book_new();
+      const wsIncome = XLSX.utils.aoa_to_sheet(incomeSheet);
+      const wsExpense = XLSX.utils.aoa_to_sheet(expenseSheet);
+      XLSX.utils.book_append_sheet(wb, wsIncome, "الإيرادات");
+      XLSX.utils.book_append_sheet(wb, wsExpense, "المصروفات");
+      XLSX.writeFile(wb, "تقرير_الإيرادات_والمصروفات.xlsx");
+    }
+  </script>
+
+</body>
+</html>
+

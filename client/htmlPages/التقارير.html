@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>تقارير الميزانية</title>
+<style>
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    margin: 20px;
+    color: #222;
+  }
+  .container {
+    max-width: 900px;
+    margin: auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  h1, h2 {
+    color: #34495e;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  input[type="date"] {
+    padding: 7px;
+    width: 100%;
+    max-width: 250px;
+    margin-bottom: 20px;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+  }
+  button {
+    background-color: #34495e;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-bottom: 30px;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #538ac2;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+  }
+  th {
+    background-color: #34495e;
+    color: white;
+  }
+  .summary {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 30px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #e6f2e6;
+    color: #34495e;
+    text-align: center;
+  }
+  .loss {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>تقارير الميزانية</h1>
+
+  <div>
+    <label for="startDate">تاريخ البداية:</label>
+    <input type="date" id="startDate" />
+  </div>
+  <div>
+    <label for="endDate">تاريخ النهاية:</label>
+    <input type="date" id="endDate" />
+  </div>
+
+  <button onclick="generateReport()">عرض التقرير</button>
+
+  <div id="reportSection" style="display:none;">
+    <h2>التقرير التفصيلي</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>النوع</th>
+          <th>الوصف</th>
+          <th>الإيراد (ريال)</th>
+          <th>المصروف (ريال)</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+
+    <div id="summaryReport" class="summary"></div>
+
+    <button onclick="window.print()">طباعة التقرير</button>
+  </div>
+</div>
+
+<script>
+  // بيانات افتراضية، يمكنك استبدالها ببياناتك الحقيقية أو ربطها بقاعدة بيانات
+  const incomes = [
+    { date: "2025-06-01", type: "مبيعات", amount: 50000, desc: "بيع منتجات" },
+    { date: "2025-06-05", type: "خدمات", amount: 15000, desc: "خدمات استشارية" }
+  ];
+
+  const expenses = [
+    { date: "2025-06-03", type: "إيجار", amount: 10000, desc: "إيجار المكتب" },
+    { date: "2025-06-07", type: "رواتب", amount: 25000, desc: "رواتب الموظفين" }
+  ];
+
+  function generateReport() {
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+
+    if (!start || !end) {
+      alert("يرجى اختيار تاريخ البداية والنهاية.");
+      return;
+    }
+
+    if (start > end) {
+      alert("تاريخ البداية يجب أن يكون قبل أو يساوي تاريخ النهاية.");
+      return;
+    }
+
+    const filteredIncomes = incomes.filter(i => i.date >= start && i.date <= end);
+    const filteredExpenses = expenses.filter(e => e.date >= start && e.date <= end);
+
+    const combined = [];
+
+    filteredIncomes.forEach(i => combined.push({
+      date: i.date,
+      type: i.type,
+      desc: i.desc,
+      income: i.amount,
+      expense: 0
+    }));
+
+    filteredExpenses.forEach(e => combined.push({
+      date: e.date,
+      type: e.type,
+      desc: e.desc,
+      income: 0,
+      expense: e.amount
+    }));
+
+    combined.sort((a,b) => a.date.localeCompare(b.date));
+
+    const tbody = document.getElementById("reportBody");
+    tbody.innerHTML = "";
+
+    combined.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.date}</td>
+        <td>${item.type}</td>
+        <td>${item.desc || "-"}</td>
+        <td>${item.income > 0 ? item.income.toFixed(2) : "-"}</td>
+        <td>${item.expense > 0 ? item.expense.toFixed(2) : "-"}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const totalIncome = filteredIncomes.reduce((sum, cur) => sum + cur.amount, 0);
+    const totalExpense = filteredExpenses.reduce((sum, cur) => sum + cur.amount, 0);
+    const net = totalIncome - totalExpense;
+
+    const summary = document.getElementById("summaryReport");
+    summary.textContent = `الإيرادات الكلية: ${totalIncome.toFixed(2)} ريال  |  المصروفات الكلية: ${totalExpense.toFixed(2)} ريال  |  صافي الميزانية: ${net.toFixed(2)} ريال`;
+    
+    if(net < 0){
+      summary.classList.add("loss");
+    } else {
+      summary.classList.remove("loss");
+    }
+
+    document.getElementById("reportSection").style.display = "block";
+  }
+</script>
+
+</body>
+</html>

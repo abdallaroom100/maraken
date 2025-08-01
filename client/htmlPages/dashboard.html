@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة تحكم - Dashboard</title>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f0f4f9;
+      color: #1a1a1a;
+      direction: rtl;
+    }
+
+    /* الشريط الجانبي */
+    .sidebar {
+      width: 240px;
+      background-color: #002d5e;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      padding-top: 60px;
+      box-shadow: inset -3px 0 8px rgba(0, 0, 0, 0.3);
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar ul li {
+      padding: 18px 25px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+      user-select: none;
+    }
+
+    .sidebar ul li:hover {
+      background-color: #004080;
+    }
+
+    .sidebar ul li i {
+      font-size: 18px;
+      color: #aad4ff;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .sidebar ul li a {
+      color: #fff;
+      text-decoration: none;
+      flex-grow: 1;
+      transition: color 0.3s ease;
+    }
+
+    .sidebar ul li a:hover {
+      color: #fff;
+    }
+
+    .sidebar ul li span {
+      flex-grow: 1;
+    }
+
+    /* الجزء الرئيسي */
+    .main-content {
+      margin-right: 240px;
+      padding: 30px 40px 60px 40px;
+      min-height: 100vh;
+      background: #f0f4f9;
+    }
+
+    /* عنوان الداشبورد */
+    .main-content h1 {
+      color: #004080;
+      margin-bottom: 20px;
+      font-weight: 700;
+      font-size: 28px;
+    }
+
+    /* بطاقة المحتوى */
+    .card {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 25px 30px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+      margin-bottom: 30px;
+    }
+
+    /* نصوص داخل البطاقة */
+    .card p {
+      font-size: 17px;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    /* رسم بياني */
+    #myChart {
+      max-width: 100%;
+      height: 350px;
+    }
+
+    /* فوتر */
+    footer {
+      text-align: center;
+      padding: 15px;
+      background-color: #002d5e;
+      color: #aad4ff;
+      position: fixed;
+      bottom: 0;
+      right: 240px;
+      left: 0;
+      font-size: 14px;
+      user-select: none;
+      box-shadow: 0 -2px 5px rgb(0 0 0 / 0.15);
+    }
+
+    /* استجابة للشاشات الصغيرة */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+      }
+      .main-content {
+        margin-right: 200px;
+        padding: 20px;
+      }
+      footer {
+        right: 200px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        display: none;
+      }
+      .main-content {
+        margin: 0;
+        padding: 15px;
+      }
+      footer {
+        right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- الشريط الجانبي -->
+  <div class="sidebar" id="sidebar">
+    <ul>
+       <li>
+        <img src="img/15848176933.png" alt="" style="width:90px; border-radius: 50%; border: #1a1a1a 2px solid;">
+        <h3>مراكن الورد </h3>
+       </li>
+      <li onclick="alert('لوحة التحكم')">
+        <i class="fas fa-home"></i>
+        <span>لوحة التحكم</span>
+      </li>
+     
+      <li >
+        <i class="fas fa-users"></i>
+     <a href="الموظفين والرواتب .html">الموظفين والرواتب</a>
+      </li>
+      <li>
+        <i class="fas fa-wallet"></i>
+        <a href="مصروفات.html">المصروفات</a>
+      </li>
+      <li>
+        <i class="fas fa-coins"></i>
+        <a href="ارادات.html">الإيرادات</a>
+      </li>
+      <li>
+        <i class="fas fa-balance-scale"></i>
+        <a href="الميزانية.html">الميزانية</a>
+      </li>
+      <li>
+        <i class="fas fa-chart-line"></i>
+        <a href="التقارير.html">التقارير</a>
+      </li>
+      <li onclick="alert('الإعدادات')">
+        <i class="fas fa-cogs"></i>
+        <span>الإعدادات</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- المحتوى الرئيسي -->
+  <div class="main-content">
+    <h1>مرحباً بك في لوحة التحكم</h1>
+
+    <div class="card">
+      <h2>ملخص الأداء المالي</h2>
+      <p>
+        هنا تجد نظرة عامة على إيرادات الشركة، المصروفات، والميزانية. يمكنك مراقبة أداء الشركة بشكل دقيق واتخاذ القرارات المناسبة.
+      </p>
+      <!-- الرسم البياني -->
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>معلومات إضافية</h2>
+      <p>المدير العام:محمد بن جبران</p>
+
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 جميع الحقوق محفوظة - مراكن الورد
+  </footer>
+
+  <script>
+    // إعداد بيانات الرسم البياني
+    const ctx = document.getElementById("myChart").getContext("2d");
+    const myChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو"],
+        datasets: [
+          {
+            label: "الإيرادات (بالريال)",
+            data: [5000, 7000, 8000, 6000, 9000, 11000],
+            backgroundColor: "rgba(0, 64, 128, 0.7)",
+            borderColor: "rgba(0, 64, 128, 1)",
+            borderWidth: 1,
+          },
+          {
+            label: "المصروفات (بالريال)",
+            data: [3000, 4000, 3500, 4000, 5000, 4500],
+            backgroundColor: "rgba(255, 99, 132, 0.6)",
+            borderColor: "rgba(255, 99, 132, 1)",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "الإيرادات والمصروفات حسب الشهر",
+            font: { size: 18, weight: "bold" },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1000,
+            },
+          },
+        },
+      },
+    });
+  </script>
+</body>
+</html>
