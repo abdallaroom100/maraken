@@ -7,6 +7,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
+import WorkersList from './pages/WorkersList'
+import WorkerEdit from './pages/WorkerEdit'
 import Expenses from './pages/Expenses'
 import Revenues from './pages/Revenues'
 import Budget from './pages/Budget'
@@ -68,6 +70,22 @@ function App() {
           <ProtectedRoute admin={admin} loading={loading}>
             <Layout admin={admin}>
               <Employees />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/workers-list" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <WorkersList />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/workers/edit/:id" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <WorkerEdit />
             </Layout>
           </ProtectedRoute>
         } />

@@ -15,7 +15,8 @@ const Layout = ({ children, admin }: LayoutProps) => {
 
   const menuItems = [
     { path: '/', icon: 'fas fa-home', label: 'لوحة التحكم' },
-    { path: '/employees', icon: 'fas fa-users', label: 'الموظفين والرواتب' },
+    { path: '/employees', icon: 'fas fa-user-plus', label: 'إضافة موظف' },
+    { path: '/workers-list', icon: 'fas fa-users', label: 'قائمة الموظفين' },
     { path: '/expenses', icon: 'fas fa-wallet', label: 'المصروفات' },
     { path: '/revenues', icon: 'fas fa-coins', label: 'الإيرادات' },
     { path: '/budget', icon: 'fas fa-balance-scale', label: 'الميزانية' },
