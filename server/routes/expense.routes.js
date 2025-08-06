@@ -14,10 +14,10 @@ const router = express.Router();
 router.post("/:adminId", createExpense);
 
 // Get all expenses
-router.get("/", getExpenses);
+router.get("/:adminId", getExpenses);
 
 // Get single expense
-router.get("/:id", getExpense);
+router.get("/find/:id", getExpense);
 
 // Get admin expenses
 router.get("/admin/:adminId", getAdminExpenses);

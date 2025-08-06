@@ -23,7 +23,8 @@ export const createRevenue = async (req, res) => {
 
 export const getRevenues = async (req, res) => {
     try {
-        const revenues = await Revenues.find();
+        const {adminId} = req.params
+        const revenues = await Revenues.find({adminId});
         res.status(200).json({ revenues });
     } catch (error) {
         res.status(500).json({ message: error.message });

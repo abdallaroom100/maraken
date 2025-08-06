@@ -22,7 +22,8 @@ export const createExpense = async (req, res) => {
 
 export const getExpenses = async (req, res) => {
     try {
-        const expenses = await Expenses.find();
+        const { adminId } = req.params;
+        const expenses = await Expenses.find({adminId})
         res.status(200).json({ expenses });
     } catch (error) {
         res.status(500).json({ message: error.message });

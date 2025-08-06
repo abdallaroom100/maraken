@@ -18,8 +18,18 @@ router.get('/:id/salary-history', workerController.getWorkerSalaryHistory);
 // Salary routes
 router.post('/salaries', salaryController.createOrUpdateSalary);
 router.put('/salaries/:id', salaryController.updateSalary);
+
+// New separated salary routes
+router.put('/salaries/:id/data', salaryController.updateSalaryData); // تحديث البيانات فقط
+router.post('/salaries/mark-paid', salaryController.markSalaryAsPaid); // دفع الراتب
+router.post('/salaries/mark-unpaid', salaryController.markSalaryAsUnpaid); // إلغاء الدفع
+
+// Old salary routes (for backward compatibility)
 router.post('/salaries/pay', salaryController.paySalary);
 router.post('/salaries/cancel-payment', salaryController.cancelSalaryPayment);
+router.post('/salaries/reset-payment', salaryController.resetSalaryPaymentStatus);
+router.post('/salaries/check-payment', salaryController.checkAndFixSalaryPaymentStatus);
+router.get('/salaries/:id/payment-status', salaryController.checkSalaryPaymentStatus);
 router.get('/salaries', salaryController.getSalariesByMonth);
 router.get('/salaries/:id', salaryController.getSalaryById);
 router.get('/salary-payments', salaryController.getSalaryPayments);

@@ -14,10 +14,10 @@ const router = express.Router();
 router.post("/:adminId", createRevenue);
 
 // Get all revenues
-router.get("/", getRevenues);
+router.get("/:adminId", getRevenues);
 
 // Get single revenue
-router.get("/:id", getRevenue);
+router.get("/find/:id", getRevenue);
 
 // Get admin revenues
 router.get("/admin/:adminId", getAdminRevenues);

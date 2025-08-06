@@ -1,6 +1,7 @@
 import Expenses from "../models/expenses.model.js";
 import Revenues from "../models/revenues.model.js";
 import Admin from "../models/admin.model.js";
+import SalaryPayment from "../models/salaryPayment.model.js";
 import mongoose from "mongoose";
 
 // الحصول على إحصائيات شاملة
@@ -114,6 +115,44 @@ export const getDashboardStats = async (req, res) => {
         console.log('Total revenues query result:', totalRevenues);
         console.log('Revenues match query:', { ...dateQuery, ...adminQuery });
 
+        // الحصول على إجمالي الرواتب المدفوعة
+        let salaryQuery = {};
+        if (year && month) {
+            salaryQuery = { year: parseInt(year), month: parseInt(month) };
+        }
+        if (adminId && adminId !== '') {
+            salaryQuery.adminId = new mongoose.Types.ObjectId(adminId);
+        }
+
+        const totalSalaries = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
+        ]);
+
+        // الحصول على إحصائيات الرواتب حسب الموظف
+        const salariesByWorker = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            {
+                $lookup: {
+                    from: "workers",
+                    localField: "workerId",
+                    foreignField: "_id",
+                    as: "worker"
+                }
+            },
+            { $unwind: "$worker" },
+            {
+                $group: {
+                    _id: "$workerId",
+                    workerName: { $first: "$worker.name" },
+                    workerJob: { $first: "$worker.job" },
+                    totalSalary: { $sum: "$amount" },
+                    paymentsCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalSalary: -1 } }
+        ]);
+
         // التحقق من البيانات بدون فلتر adminId
         if (adminId && adminId !== '') {
             const expensesWithoutAdminFilter = await Expenses.aggregate([
@@ -149,6 +188,13 @@ export const getDashboardStats = async (req, res) => {
             .limit(5);
 
         const recentRevenues = await Revenues.find({ ...dateQuery, ...adminQuery })
+            .populate('adminId', 'name')
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        // الحصول على أحدث مدفوعات الرواتب
+        const recentSalaryPayments = await SalaryPayment.find(salaryQuery)
+            .populate('workerId', 'name job')
             .populate('adminId', 'name')
             .sort({ createdAt: -1 })
             .limit(5);
@@ -235,6 +281,7 @@ export const getDashboardStats = async (req, res) => {
 
         const totalExpensesAmount = totalExpenses.length > 0 ? totalExpenses[0].total : 0;
         const totalRevenuesAmount = totalRevenues.length > 0 ? totalRevenues[0].total : 0;
+        const totalSalariesAmount = totalSalaries.length > 0 ? totalSalaries[0].total : 0;
         const netAmount = totalRevenuesAmount - totalExpensesAmount;
 
         res.status(200).json({
@@ -243,14 +290,18 @@ export const getDashboardStats = async (req, res) => {
                 summary: {
                     totalExpenses: totalExpensesAmount,
                     totalRevenues: totalRevenuesAmount,
+                    totalSalaries: totalSalariesAmount,
                     netAmount: netAmount,
                     expensesCount: await Expenses.countDocuments({ ...dateQuery, ...adminQuery }),
-                    revenuesCount: await Revenues.countDocuments({ ...dateQuery, ...adminQuery })
+                    revenuesCount: await Revenues.countDocuments({ ...dateQuery, ...adminQuery }),
+                    salariesCount: totalSalaries.length > 0 ? totalSalaries[0].count : 0
                 },
                 expensesByType,
                 revenuesByType,
                 recentExpenses,
                 recentRevenues,
+                recentSalaryPayments,
+                salariesByWorker,
                 adminStats: adminStats.sort((a, b) => b.netAmount - a.netAmount)
             }
         });
@@ -260,6 +311,128 @@ export const getDashboardStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "حدث خطأ في جلب الإحصائيات",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// الحصول على إحصائيات الرواتب
+export const getSalaryStats = async (req, res) => {
+    try {
+        const { year, month, adminId } = req.query;
+        
+        // بناء query للرواتب
+        let salaryQuery = {};
+        if (year && month) {
+            salaryQuery = { year: parseInt(year), month: parseInt(month) };
+        }
+        if (adminId && adminId !== '') {
+            try {
+                salaryQuery.adminId = new mongoose.Types.ObjectId(adminId);
+            } catch (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: "معرف المدير غير صحيح"
+                });
+            }
+        }
+
+        // إجمالي الرواتب المدفوعة
+        const totalSalaries = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
+        ]);
+
+        // الرواتب حسب الموظف
+        const salariesByWorker = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            {
+                $lookup: {
+                    from: "workers",
+                    localField: "workerId",
+                    foreignField: "_id",
+                    as: "worker"
+                }
+            },
+            { $unwind: "$worker" },
+            {
+                $group: {
+                    _id: "$workerId",
+                    workerName: { $first: "$worker.name" },
+                    workerJob: { $first: "$worker.job" },
+                    totalSalary: { $sum: "$amount" },
+                    paymentsCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalSalary: -1 } }
+        ]);
+
+        // الرواتب حسب طريقة الدفع
+        const salariesByPaymentMethod = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            {
+                $group: {
+                    _id: "$paymentMethod",
+                    total: { $sum: "$amount" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { total: -1 } }
+        ]);
+
+        // أحدث مدفوعات الرواتب
+        const recentSalaryPayments = await SalaryPayment.find(salaryQuery)
+            .populate('workerId', 'name job')
+            .populate('adminId', 'name')
+            .sort({ createdAt: -1 })
+            .limit(10);
+
+        // إحصائيات الرواتب حسب المدير
+        const salariesByAdmin = await SalaryPayment.aggregate([
+            { $match: salaryQuery },
+            {
+                $lookup: {
+                    from: "floweradmins",
+                    localField: "adminId",
+                    foreignField: "_id",
+                    as: "admin"
+                }
+            },
+            { $unwind: "$admin" },
+            {
+                $group: {
+                    _id: "$adminId",
+                    adminName: { $first: "$admin.name" },
+                    totalSalaries: { $sum: "$amount" },
+                    salariesCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalSalaries: -1 } }
+        ]);
+
+        const totalSalariesAmount = totalSalaries.length > 0 ? totalSalaries[0].total : 0;
+        const totalSalariesCount = totalSalaries.length > 0 ? totalSalaries[0].count : 0;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                summary: {
+                    totalSalaries: totalSalariesAmount,
+                    salariesCount: totalSalariesCount,
+                    averageSalary: totalSalariesCount > 0 ? totalSalariesAmount / totalSalariesCount : 0
+                },
+                salariesByWorker,
+                salariesByPaymentMethod,
+                salariesByAdmin,
+                recentSalaryPayments
+            }
+        });
+
+    } catch (error) {
+        console.error('Salary stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: "حدث خطأ في جلب إحصائيات الرواتب",
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

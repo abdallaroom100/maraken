@@ -120,15 +120,72 @@ export const updateSalary = async (req, res) => {
     }
 };
 
-// Pay salary (mark as paid and create payment record)
-export const paySalary = async (req, res) => {
+// Update salary data only (without payment)
+export const updateSalaryData = async (req, res) => {
     try {
+        const { id } = req.params;
         const { 
-            salaryId, 
-            paymentMethod = 'cash', 
-            notes,
-            adminId 
+            basicSalary, 
+            absenceDays, 
+            incentives, 
+            deductions, 
+            withdrawals,
+            notes 
         } = req.body;
+
+        const salary = await Salary.findById(id).populate('workerId');
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        // Calculate final salary
+        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals);
+
+        // Update salary data only
+        salary.basicSalary = Number(basicSalary);
+        salary.absenceDays = Number(absenceDays);
+        salary.incentives = Number(incentives);
+        salary.deductions = Number(deductions);
+        salary.withdrawals = Number(withdrawals);
+        salary.finalSalary = finalSalary;
+        salary.notes = notes;
+
+        await salary.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'تم تحديث بيانات الراتب بنجاح',
+            data: {
+                _id: salary._id,
+                workerName: salary.workerId.name,
+                year: salary.year,
+                month: salary.month,
+                basicSalary: salary.basicSalary,
+                absenceDays: salary.absenceDays,
+                incentives: salary.incentives,
+                deductions: salary.deductions,
+                withdrawals: salary.withdrawals,
+                finalSalary: salary.finalSalary,
+                isPaid: salary.isPaid,
+                notes: salary.notes
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في تحديث بيانات الراتب',
+            error: error.message
+        });
+    }
+};
+
+// Mark salary as paid (simple payment)
+export const markSalaryAsPaid = async (req, res) => {
+    try {
+        const { salaryId, paymentMethod = 'cash', notes, adminId } = req.body;
 
         const salary = await Salary.findById(salaryId).populate('workerId');
         if (!salary) {
@@ -141,9 +198,14 @@ export const paySalary = async (req, res) => {
         if (salary.isPaid) {
             return res.status(400).json({
                 success: false,
-                message: 'تم دفع هذا الراتب مسبقاً'
+                message: 'هذا الراتب مدفوع مسبقاً'
             });
         }
+
+        // Mark as paid
+        salary.isPaid = true;
+        salary.paymentDate = new Date();
+        await salary.save();
 
         // Create payment record
         const payment = new SalaryPayment({
@@ -160,11 +222,6 @@ export const paySalary = async (req, res) => {
         });
 
         await payment.save();
-
-        // Mark salary as paid
-        salary.isPaid = true;
-        salary.paymentDate = new Date();
-        await salary.save();
 
         // Create expense record
         const expense = new Expenses({
@@ -186,11 +243,196 @@ export const paySalary = async (req, res) => {
             success: true,
             message: 'تم دفع الراتب بنجاح',
             data: {
-                payment,
-                salary
+                _id: salary._id,
+                workerName: salary.workerId.name,
+                year: salary.year,
+                month: salary.month,
+                finalSalary: salary.finalSalary,
+                isPaid: salary.isPaid,
+                paymentDate: salary.paymentDate
             }
         });
     } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في دفع الراتب',
+            error: error.message
+        });
+    }
+};
+
+// Mark salary as unpaid (cancel payment)
+export const markSalaryAsUnpaid = async (req, res) => {
+    try {
+        const { salaryId } = req.body;
+
+        const salary = await Salary.findById(salaryId).populate('workerId');
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        if (!salary.isPaid) {
+            return res.status(400).json({
+                success: false,
+                message: 'هذا الراتب غير مدفوع مسبقاً'
+            });
+        }
+
+        // Find and delete payment record
+        const payment = await SalaryPayment.findOne({ salaryId });
+        if (payment) {
+            // Delete related expense record
+            await Expenses.findOneAndDelete({ salaryPaymentId: payment._id });
+            await payment.deleteOne();
+        }
+
+        // Mark as unpaid
+        salary.isPaid = false;
+        salary.paymentDate = undefined;
+        await salary.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'تم إلغاء دفع الراتب بنجاح',
+            data: {
+                _id: salary._id,
+                workerName: salary.workerId.name,
+                year: salary.year,
+                month: salary.month,
+                finalSalary: salary.finalSalary,
+                isPaid: salary.isPaid,
+                paymentDate: salary.paymentDate
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في إلغاء دفع الراتب',
+            error: error.message
+        });
+    }
+};
+
+// Pay salary (mark as paid and create payment record)
+export const paySalary = async (req, res) => {
+    try {
+        const { 
+            salaryId, 
+            paymentMethod = 'cash', 
+            notes,
+            adminId 
+        } = req.body;
+
+        console.log('Pay salary request:', { salaryId, paymentMethod, notes, adminId });
+
+        const salary = await Salary.findById(salaryId).populate('workerId');
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        console.log('Found salary:', {
+            id: salary._id,
+            workerName: salary.workerId?.name,
+            year: salary.year,
+            month: salary.month,
+            isPaid: salary.isPaid,
+            finalSalary: salary.finalSalary
+        });
+
+        const wasAlreadyPaid = salary.isPaid;
+
+        // إذا كان الراتب مدفوع مسبقاً، نحذف السجلات القديمة أولاً
+        if (salary.isPaid) {
+            console.log('Salary was already paid, deleting old records...');
+            // حذف سجل الدفع القديم
+            const oldPayment = await SalaryPayment.findOne({ salaryId });
+            if (oldPayment) {
+                console.log('Deleting old payment record:', oldPayment._id);
+                // حذف سجل المصروفات المرتبط
+                await Expenses.findOneAndDelete({ salaryPaymentId: oldPayment._id });
+                await oldPayment.deleteOne();
+            }
+        }
+
+        // إنشاء سجل دفع جديد
+        const payment = new SalaryPayment({
+            salaryId,
+            workerId: salary.workerId._id,
+            workerName: salary.workerId.name,
+            workerJob: salary.workerId.job,
+            year: salary.year,
+            month: salary.month,
+            amount: salary.finalSalary,
+            paymentMethod,
+            adminId: adminId || null,
+            notes
+        });
+
+        console.log('Creating new payment record:', {
+            salaryId: payment.salaryId,
+            workerName: payment.workerName,
+            amount: payment.amount,
+            paymentMethod: payment.paymentMethod
+        });
+
+        await payment.save();
+        console.log('Payment record saved successfully');
+
+        // تحديث حالة الراتب كمدفوع
+        salary.isPaid = true;
+        salary.paymentDate = new Date();
+        await salary.save();
+        console.log('Salary marked as paid');
+
+        // إنشاء سجل مصروفات جديد
+        const expense = new Expenses({
+            amount: salary.finalSalary,
+            type: 'salary',
+            adminId: adminId || null,
+            description: `راتب ${salary.workerId.name} - ${salary.workerId.job} - ${salary.year}/${salary.month}`,
+            salaryPaymentId: payment._id,
+            workerId: salary.workerId._id,
+            workerName: salary.workerId.name,
+            workerJob: salary.workerId.job,
+            year: salary.year,
+            month: salary.month
+        });
+
+        console.log('Creating expense record:', {
+            amount: expense.amount,
+            type: expense.type,
+            description: expense.description
+        });
+
+        await expense.save();
+        console.log('Expense record saved successfully');
+
+        const message = wasAlreadyPaid ? 'تم إعادة دفع الراتب بنجاح' : 'تم دفع الراتب بنجاح';
+
+        res.status(200).json({
+            success: true,
+            message,
+            data: {
+                payment,
+                salary: {
+                    _id: salary._id,
+                    workerName: salary.workerId.name,
+                    year: salary.year,
+                    month: salary.month,
+                    finalSalary: salary.finalSalary,
+                    isPaid: salary.isPaid,
+                    paymentDate: salary.paymentDate
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error in paySalary:', error);
         res.status(500).json({
             success: false,
             message: 'خطأ في دفع الراتب',
@@ -241,6 +483,46 @@ export const cancelSalaryPayment = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'خطأ في إلغاء دفع الراتب',
+            error: error.message
+        });
+    }
+};
+
+// Reset salary payment status (helper function)
+export const resetSalaryPaymentStatus = async (req, res) => {
+    try {
+        const { salaryId } = req.body;
+
+        const salary = await Salary.findById(salaryId);
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        // حذف سجل الدفع إذا وجد
+        const payment = await SalaryPayment.findOne({ salaryId });
+        if (payment) {
+            // حذف سجل المصروفات المرتبط
+            await Expenses.findOneAndDelete({ salaryPaymentId: payment._id });
+            await payment.deleteOne();
+        }
+
+        // إعادة تعيين حالة الراتب
+        salary.isPaid = false;
+        salary.paymentDate = undefined;
+        await salary.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'تم إعادة تعيين حالة دفع الراتب بنجاح',
+            data: salary
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في إعادة تعيين حالة دفع الراتب',
             error: error.message
         });
     }
@@ -324,6 +606,135 @@ export const getSalaryPayments = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'خطأ في جلب سجل المدفوعات',
+            error: error.message
+        });
+    }
+};
+
+// Check salary payment status
+export const checkSalaryPaymentStatus = async (req, res) => {
+    try {
+        const { salaryId } = req.params;
+
+        const salary = await Salary.findById(salaryId).populate('workerId');
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        // التحقق من وجود سجل دفع
+        const payment = await SalaryPayment.findOne({ salaryId });
+        const expense = payment ? await Expenses.findOne({ salaryPaymentId: payment._id }) : null;
+
+        const status = {
+            salary: {
+                _id: salary._id,
+                workerName: salary.workerId?.name,
+                year: salary.year,
+                month: salary.month,
+                finalSalary: salary.finalSalary,
+                isPaid: salary.isPaid,
+                paymentDate: salary.paymentDate
+            },
+            payment: payment ? {
+                _id: payment._id,
+                amount: payment.amount,
+                paymentMethod: payment.paymentMethod,
+                createdAt: payment.createdAt
+            } : null,
+            expense: expense ? {
+                _id: expense._id,
+                amount: expense.amount,
+                type: expense.type,
+                description: expense.description
+            } : null,
+            isConsistent: (salary.isPaid && payment && expense) || (!salary.isPaid && !payment && !expense)
+        };
+
+        res.status(200).json({
+            success: true,
+            data: status
+        });
+    } catch (error) {
+        console.error('Error in checkSalaryPaymentStatus:', error);
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في التحقق من حالة دفع الراتب',
+            error: error.message
+        });
+    }
+};
+
+// Check and fix salary payment status
+export const checkAndFixSalaryPaymentStatus = async (req, res) => {
+    try {
+        const { salaryId } = req.body;
+
+        const salary = await Salary.findById(salaryId);
+        if (!salary) {
+            return res.status(404).json({
+                success: false,
+                message: 'سجل الراتب غير موجود'
+            });
+        }
+
+        // التحقق من وجود سجل دفع
+        const payment = await SalaryPayment.findOne({ salaryId });
+        const expense = payment ? await Expenses.findOne({ salaryPaymentId: payment._id }) : null;
+
+        // إصلاح الحالة إذا كانت غير متسقة
+        let fixed = false;
+        let message = 'حالة الدفع صحيحة';
+
+        if (salary.isPaid && !payment) {
+            // الراتب محدد كمدفوع لكن لا يوجد سجل دفع
+            salary.isPaid = false;
+            salary.paymentDate = undefined;
+            await salary.save();
+            fixed = true;
+            message = 'تم إصلاح حالة الدفع - الراتب لم يعد محدد كمدفوع';
+        } else if (!salary.isPaid && payment) {
+            // الراتب غير محدد كمدفوع لكن يوجد سجل دفع
+            salary.isPaid = true;
+            salary.paymentDate = payment.createdAt;
+            await salary.save();
+            fixed = true;
+            message = 'تم إصلاح حالة الدفع - الراتب محدد كمدفوع';
+        } else if (salary.isPaid && payment && !expense) {
+            // الراتب محدد كمدفوع ويوجد سجل دفع لكن لا يوجد سجل مصروفات
+            const newExpense = new Expenses({
+                amount: salary.finalSalary,
+                type: 'salary',
+                adminId: payment.adminId,
+                description: `راتب ${payment.workerName} - ${payment.workerJob} - ${payment.year}/${payment.month}`,
+                salaryPaymentId: payment._id,
+                workerId: payment.workerId,
+                workerName: payment.workerName,
+                workerJob: payment.workerJob,
+                year: payment.year,
+                month: payment.month
+            });
+            await newExpense.save();
+            fixed = true;
+            message = 'تم إصلاح حالة الدفع - تم إنشاء سجل المصروفات المفقود';
+        }
+
+        res.status(200).json({
+            success: true,
+            message,
+            data: {
+                salary,
+                payment,
+                expense,
+                fixed
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في التحقق من حالة دفع الراتب',
             error: error.message
         });
     }
