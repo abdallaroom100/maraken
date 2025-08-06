@@ -13,6 +13,10 @@ import Expenses from './pages/Expenses'
 import Revenues from './pages/Revenues'
 import Budget from './pages/Budget'
 import Reports from './pages/Reports'
+import RevenuesList from './pages/RevenuesList'
+import ExpensesList from './pages/ExpensesList'
+import RevenueEdit from './pages/RevenueEdit'
+import ExpenseEdit from './pages/ExpenseEdit'
 import './App.css'
 
 function App() {
@@ -118,6 +122,35 @@ function App() {
           <ProtectedRoute admin={admin} loading={loading}>
             <Layout admin={admin}>
               <Reports />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/expenses-list" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <ExpensesList />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/revenues-list" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <RevenuesList />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/revenues/edit/:id" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <RevenueEdit />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/expenses/edit/:id" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <ExpenseEdit />
             </Layout>
           </ProtectedRoute>
         } />

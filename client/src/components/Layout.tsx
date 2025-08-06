@@ -9,19 +9,38 @@ interface LayoutProps {
   admin?: any
 }
 
+type MenuLists ={
+  path:string,icon:string,label:string
+}
 const Layout = ({ children, admin }: LayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { logout } = useAuth()
-
-  const menuItems = [
-    { path: '/', icon: 'fas fa-home', label: 'لوحة التحكم' },
-    { path: '/employees', icon: 'fas fa-user-plus', label: 'إضافة موظف' },
-    { path: '/workers-list', icon: 'fas fa-users', label: 'قائمة الموظفين' },
-    { path: '/expenses', icon: 'fas fa-wallet', label: 'المصروفات' },
-    { path: '/revenues', icon: 'fas fa-coins', label: 'الإيرادات' },
-    { path: '/budget', icon: 'fas fa-balance-scale', label: 'الميزانية' },
-    { path: '/reports', icon: 'fas fa-chart-line', label: 'التقارير' },
-  ]
+  let menuItems:MenuLists[] = [];
+  if (admin?.role === 'manager') {
+    menuItems = [
+      { path: '/', icon: 'fas fa-home', label: 'لوحة التحكم' },
+      { path: '/employees', icon: 'fas fa-user-plus', label: 'إضافة موظف' },
+      { path: '/workers-list', icon: 'fas fa-users', label: 'قائمة الموظفين' },
+      // { path: '/expenses', icon: 'fas fa-wallet', label: 'المصروفات' },
+      // { path: '/expenses-list', icon: 'fas fa-list-alt', label: 'سجل المصروفات' },
+      // { path: '/revenues', icon: 'fas fa-coins', label: 'الإيرادات' },
+      // { path: '/revenues-list', icon: 'fas fa-list', label: 'سجل الإيرادات' },
+      // { path: '/budget', icon: 'fas fa-balance-scale', label: 'الميزانية' },
+      // { path: '/reports', icon: 'fas fa-chart-line', label: 'التقارير' },
+    ];
+  } else if (admin?.role === 'moderator') {
+    menuItems = [
+      { path: '/expenses', icon: 'fas fa-wallet', label: 'المصروفات' },
+      { path: '/expenses-list', icon: 'fas fa-list-alt', label: 'سجل المصروفات' },
+      { path: '/revenues', icon: 'fas fa-coins', label: 'الإيرادات' },
+      { path: '/revenues-list', icon: 'fas fa-list', label: 'سجل الإيرادات' },
+      // { path: '/budget', icon: 'fas fa-balance-scale', label: 'الميزانية' },
+      // { path: '/reports', icon: 'fas fa-chart-line', label: 'التقارير' },
+      // { path: '/', icon: 'fas fa-home', label: 'لوحة التحكم' },
+      // { path: '/employees', icon: 'fas fa-user-plus', label: 'إضافة موظف' },
+      // { path: '/workers-list', icon: 'fas fa-users', label: 'قائمة الموظفين' },
+    ];
+  }
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)

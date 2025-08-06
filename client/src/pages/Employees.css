@@ -272,9 +272,6 @@ td {
   font-size: 14px;
 }
 
-tbody tr:hover {
-  background-color: #f8f9fa;
-}
 
 /* Button Groups */
 .btn-group {
@@ -440,6 +437,26 @@ tbody tr:hover {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Red button for cancel payment */
+.salary-form .salary-btn.bg-red-600 {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.salary-form .salary-btn.bg-red-600:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+}
+
+/* Green button for payment */
+.salary-form .salary-btn.bg-green-600 {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.salary-form .salary-btn.bg-green-600:hover {
+  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
 /* Salary History */
@@ -779,6 +796,73 @@ tbody tr:hover {
   box-shadow: none;
 }
 
+/* الأزرار المنفصلة للرواتب */
+.salary-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.salary-buttons .salary-btn {
+  flex: 1;
+  min-width: 150px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  text-align: center;
+}
+
+.salary-buttons .salary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.salary-buttons .salary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ألوان الأزرار */
+.salary-buttons .salary-btn.bg-blue-600 {
+  background-color: #2563eb;
+}
+
+.salary-buttons .salary-btn.bg-blue-600:hover {
+  background-color: #1d4ed8;
+}
+
+.salary-buttons .salary-btn.bg-green-600 {
+  background-color: #16a34a;
+}
+
+.salary-buttons .salary-btn.bg-green-600:hover {
+  background-color: #15803d;
+}
+
+.salary-buttons .salary-btn.bg-red-600 {
+  background-color: #dc2626;
+}
+
+.salary-buttons .salary-btn.bg-red-600:hover {
+  background-color: #b91c1c;
+}
+
+.salary-buttons .salary-btn.bg-purple-600 {
+  background-color: #9333ea;
+}
+
+.salary-buttons .salary-btn.bg-purple-600:hover {
+  background-color: #7c3aed;
+}
+
 /* Responsive Design for Salary Section */
 @media (max-width: 1024px) {
   .salary-section {
@@ -899,4 +983,133 @@ tbody tr:hover {
     padding: 8px 12px;
     font-size: 13px;
   }
+} 
+
+/* تحسين شكل جدول الموظفين */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+thead th {
+  background: #e3f0fd;
+  color: #1a237e;
+  font-weight: bold;
+  text-align: center;
+  padding: 14px 8px;
+  border-bottom: 3px solid #1976d2;
+  font-size: 1.08em;
+  letter-spacing: 0.5px;
+}
+tbody td {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 1rem;
+}
+tbody tr:nth-child(even) {
+  background: #f7f8fa;
+}
+tbody tr:hover {
+  background: #e3e9f7;
+  transition: background 0.2s;
+}
+.salary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.salary-badge.paid {
+  background: #e6f9ed;
+  color: #1a7f37;
+  border: 1px solid #b6e7c9;
+}
+.salary-badge.unpaid {
+  background: #fdeaea;
+  color: #c0392b;
+  border: 1px solid #f5b7b1;
+}
+.salary-badge.unknown {
+  background: #f4f4f4;
+  color: #888;
+  border: 1px solid #ddd;
+}
+.salary-badge .icon {
+  font-size: 1.2em;
+  margin-left: 2px;
+}
+.user-avatar {
+  font-size: 1.6em;
+  background: #e3e9f7;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.worker-name {
+  font-size: 1.08em;
+  font-weight: bold;
+  color: #1a237e;
+  margin-bottom: 2px;
+}
+.worker-job {
+  font-size: 0.97em;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 0px;
+}
+.identity-badge {
+  display: inline-block;
+  background: #f4f4f4;
+  color: #555;
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.98em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: 1px solid #e0e0e0;
+}
+@media (max-width: 700px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead {
+    display: none;
+  }
+  tbody td {
+    text-align: right;
+    padding: 10px 6px;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+  tbody tr {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+} 
+
+.salary-basic {
+  display: inline-block;
+  background: #f0f7fa;
+  color: #1976d2;
+  border-radius: 8px;
+  padding: 3px 12px;
+  font-size: 1em;
+  font-weight: 600;
+  border: 1px solid #cfe2f3;
+  letter-spacing: 0.5px;
+  margin: 0 2px;
 } 

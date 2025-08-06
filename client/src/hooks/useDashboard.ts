@@ -5,9 +5,11 @@ interface DashboardStats {
   summary: {
     totalExpenses: number;
     totalRevenues: number;
+    totalSalaries: number;
     netAmount: number;
     expensesCount: number;
     revenuesCount: number;
+    salariesCount: number;
   };
   expensesByType: Array<{
     _id: string;
@@ -21,7 +23,21 @@ interface DashboardStats {
   }>;
   recentExpenses: Array<any>;
   recentRevenues: Array<any>;
+  recentSalaryPayments: Array<any>;
+  salariesByWorker: Array<any>;
   adminStats: Array<any>;
+}
+
+interface SalaryStats {
+  summary: {
+    totalSalaries: number;
+    salariesCount: number;
+    averageSalary: number;
+  };
+  salariesByWorker: Array<any>;
+  salariesByPaymentMethod: Array<any>;
+  salariesByAdmin: Array<any>;
+  recentSalaryPayments: Array<any>;
 }
 
 interface DashboardFilters {
@@ -33,6 +49,7 @@ interface DashboardFilters {
 export const useDashboard = () => {
   const [allData, setAllData] = useState<{ expenses: any[]; revenues: any[] } | null>(null)
   const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [salaryStats, setSalaryStats] = useState<SalaryStats | null>(null)
   const [admins, setAdmins] = useState<Array<{
     _id: string;
     name: string;
@@ -90,6 +107,43 @@ export const useDashboard = () => {
     }
   }
 
+  // جلب إحصائيات الرواتب
+  const fetchSalaryStats = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+      
+      const queryParams = new URLSearchParams()
+      if (filters.year) queryParams.append('year', filters.year.toString())
+      if (filters.month) queryParams.append('month', filters.month.toString())
+      if (filters.adminId) queryParams.append('adminId', filters.adminId)
+      
+      const response = await fetch(`/api/dashboard/salary-stats?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      })
+      
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('admin')
+        window.location.href = '/login'
+        return
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch salary stats')
+      }
+      
+      const data = await response.json()
+      setSalaryStats(data.data)
+    } catch (error) {
+      console.error('Error fetching salary stats:', error)
+    }
+  }
+
   // جلب قائمة الأدمنين
   const fetchAdmins = async () => {
     try {
@@ -123,6 +177,7 @@ export const useDashboard = () => {
     if (!authLoading && isAuthenticated && admin) {
       fetchAllData()
       fetchAdmins()
+      fetchSalaryStats()
     }
     // eslint-disable-next-line
   }, [authLoading, isAuthenticated, admin, filters.year, filters.month])
@@ -161,13 +216,13 @@ export const useDashboard = () => {
 
     const adminStatsMap: any = {}
     filteredExpenses.forEach(e => {
-      const id = e.adminId?.toString() || 'غير محدد'
+      const id = e.adminId?.toString() || 'المدير'
       if (!adminStatsMap[id]) adminStatsMap[id] = { adminId: id, adminName: '', totalExpenses: 0, expensesCount: 0, totalRevenues: 0, revenuesCount: 0, netAmount: 0 }
       adminStatsMap[id].totalExpenses += e.amount
       adminStatsMap[id].expensesCount += 1
     })
     filteredRevenues.forEach(r => {
-      const id = r.adminId?.toString() || 'غير محدد'
+      const id = r.adminId?.toString() || 'المدير'
       if (!adminStatsMap[id]) adminStatsMap[id] = { adminId: id, adminName: '', totalExpenses: 0, expensesCount: 0, totalRevenues: 0, revenuesCount: 0, netAmount: 0 }
       adminStatsMap[id].totalRevenues += r.amount
       adminStatsMap[id].revenuesCount += 1
@@ -175,24 +230,35 @@ export const useDashboard = () => {
     Object.values(adminStatsMap).forEach((s: any) => {
       s.netAmount = s.totalRevenues - s.totalExpenses
       const found = admins.find(a => a._id === s.adminId)
-      s.adminName = found ? found.name : 'غير محدد'
+      s.adminName = found ? found.name : 'المدير'
     })
     setStats({
       summary: {
         totalExpenses,
         totalRevenues,
+        totalSalaries: 0, // سيتم تحديثها من salaryStats
         netAmount,
         expensesCount: filteredExpenses.length,
-        revenuesCount: filteredRevenues.length
+        revenuesCount: filteredRevenues.length,
+        salariesCount: 0 // سيتم تحديثها من salaryStats
       },
       expensesByType,
       revenuesByType,
       recentExpenses,
       recentRevenues,
+      recentSalaryPayments: [], // سيتم تحديثها من salaryStats
+      salariesByWorker: [], // سيتم تحديثها من salaryStats
       adminStats: Object.values(adminStatsMap).sort((a: any, b: any) => b.netAmount - a.netAmount)
     })
     setLoading(false)
   }, [allData, filters.adminId, admins])
+
+  // تحديث إحصائيات الرواتب عند تغيير الفلاتر
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && admin) {
+      fetchSalaryStats()
+    }
+  }, [filters.adminId])
 
   const updateFilters = (newFilters: Partial<DashboardFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
@@ -209,7 +275,8 @@ export const useDashboard = () => {
   const refetch = async () => {
     await fetchAllData();
     await fetchAdmins();
+    await fetchSalaryStats();
   };
 
-  return { stats, admins, loading, error, filters, updateFilters, resetFilters, refetch }
+  return { stats, salaryStats, admins, loading, error, filters, updateFilters, resetFilters, refetch }
 } 

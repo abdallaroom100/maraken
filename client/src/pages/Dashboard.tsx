@@ -10,11 +10,21 @@ import {
   Cell
 } from 'recharts'
 import './Dashboard.css'
-import { FaArrowUp, FaArrowDown } from 'react-icons/fa'
+import { FaArrowUp, FaArrowDown, FaUsers, FaMoneyBillWave } from 'react-icons/fa'
 import { MdShowChart } from 'react-icons/md'
+import { useAuth } from '../hooks/useAuth'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Dashboard = () => {
-  const { stats, admins, loading, error, filters, updateFilters, resetFilters } = useDashboard()
+  const { stats, salaryStats, admins, loading, error, filters, updateFilters, resetFilters } = useDashboard()
+  const { admin } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (admin && admin.role !== 'manager') {
+      navigate('/expenses', { replace: true });
+    }
+  }, [admin, navigate]);
 
   // تنسيق الأرقام
   const formatNumber = (num: number) => {
@@ -57,29 +67,18 @@ const Dashboard = () => {
       color: '#ef4444'
     },
     {
+      name: 'الرواتب',
+      value: salaryStats?.summary.totalSalaries || 0,
+      fill: '#f59e0b',
+      color: '#f59e0b'
+    },
+    {
       name: 'صافي الربح',
       value: stats.summary.netAmount,
       fill: '#3b82f6',
       color: '#3b82f6'
     }
   ] : []
-
-  // تحضير بيانات الإيرادات حسب النوع
-  // const revenuesData = stats?.revenuesByType.map(item => ({
-  //   name: item._id,
-  //   value: item.total,
-  //   fill: '#22c55e'
-  // })) || []
-
-  // تحضير بيانات المصروفات حسب النوع
-  // const expensesData = stats?.expensesByType.map(item => ({
-  //   name: item._id,
-  //   value: item.total,
-  //   fill: '#ef4444'
-  // })) || []
-
-  // ألوان متدرجة للمصروفات
-  // const expensesColors = ['#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#7f1d1d']
 
   if (loading) {
     return (
@@ -158,7 +157,7 @@ const Dashboard = () => {
             </select>
           </div>
           
-          <div className="filter-group " >
+          <div className="filter-group ">
             <label>الأدمن:</label>
             <select 
               value={filters.adminId} 
@@ -169,7 +168,7 @@ const Dashboard = () => {
               }}
             >
               <option value="">جميع الأدمن</option>
-              {admins.map(admin => {
+              {admins.filter(a => a._id !== admin?._id).map(admin => {
                 console.log('Admin in dropdown:', admin)
                 return (
                   <option key={admin._id} value={admin._id}>{admin.name}</option>
@@ -218,6 +217,17 @@ const Dashboard = () => {
                 <h3>إجمالي المصروفات</h3>
                 <div className="stat-amount">{formatNumber(stats.summary.totalExpenses)} ريال</div>
                 <div className="stat-count">{stats.summary.expensesCount} معاملة</div>
+              </div>
+            </div>
+
+            <div className="stat-card salaries">
+              <div className="stat-icon">
+                <FaUsers size={28} color="#f59e0b" />
+              </div>
+              <div className="stat-content">
+                <h3>إجمالي الرواتب</h3>
+                <div className="stat-amount">{formatNumber(salaryStats?.summary.totalSalaries || 0)} ريال</div>
+                <div className="stat-count">{salaryStats?.summary.salariesCount || 0} موظف</div>
               </div>
             </div>
 
@@ -285,6 +295,91 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* إحصائيات الرواتب */}
+          {salaryStats && (
+            <div className="salary-stats-section">
+              <h3>إحصائيات الرواتب - {getMonthName(filters.month)} {filters.year}</h3>
+              
+              <div className="salary-summary-grid">
+                <div className="salary-stat-card">
+                  <div className="stat-icon">
+                    <FaMoneyBillWave size={24} color="#f59e0b" />
+                  </div>
+                  <div className="stat-content">
+                    <h4>إجمالي الرواتب</h4>
+                    <div className="stat-amount">{formatNumber(salaryStats.summary.totalSalaries)} ريال</div>
+                  </div>
+                </div>
+
+                <div className="salary-stat-card">
+                  <div className="stat-icon">
+                    <FaUsers size={24} color="#3b82f6" />
+                  </div>
+                  <div className="stat-content">
+                    <h4>عدد الموظفين</h4>
+                    <div className="stat-amount">{salaryStats.summary.salariesCount} موظف</div>
+                  </div>
+                </div>
+
+                <div className="salary-stat-card">
+                  <div className="stat-icon">
+                    <FaMoneyBillWave size={24} color="#10b981" />
+                  </div>
+                  <div className="stat-content">
+                    <h4>متوسط الراتب</h4>
+                    <div className="stat-amount">{formatNumber(salaryStats.summary.averageSalary)} ريال</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* الرواتب حسب الموظف */}
+              {/* {salaryStats.salariesByWorker && salaryStats.salariesByWorker.length > 0 && (
+                <div className="salary-workers-section">
+                  <h4>الرواتب حسب الموظف</h4>
+                  <div className="salary-workers-grid">
+                    {salaryStats.salariesByWorker.map((worker: any) => (
+                      <div key={worker._id} className="worker-salary-card">
+                        <div className="worker-info">
+                          <h5>{worker.workerName}</h5>
+                          <p>{worker.workerJob}</p>
+                        </div>
+                        <div className="salary-info">
+                          <div className="salary-amount">{formatNumber(worker.totalSalary)} ريال</div>
+                          <div className="payments-count">{worker.paymentsCount} دفعة</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )} */}
+
+              {/* أحدث مدفوعات الرواتب */}
+              {salaryStats.recentSalaryPayments && salaryStats.recentSalaryPayments.length > 0 && (
+                <div className="recent-salary-payments">
+                  <h4>أحدث مدفوعات الرواتب</h4>
+                  <div className="salary-payments-list">
+                    {salaryStats.recentSalaryPayments.map((payment: any) => (
+                      <div key={payment._id} className="salary-payment-item">
+                        <div className="payment-info">
+                          <div className="worker-name">{payment.workerId?.name}</div>
+                          <div className="worker-job">{payment.workerId?.job}</div>
+                          <div className="payment-date">{formatDate(payment.createdAt)}</div>
+                        </div>
+                        <div className="payment-amount">
+                          {formatNumber(payment.amount)} ريال
+                        </div>
+                        <div className="payment-method">
+                          {payment.paymentMethod === 'cash' ? 'نقداً' : 
+                           payment.paymentMethod === 'bank' ? 'بنك' : 'شيك'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* إحصائيات الأدمنين */}
           {stats.adminStats && stats.adminStats.length > 0 && (
             <div className="tables-grid">
@@ -317,7 +412,7 @@ const Dashboard = () => {
               </div>
 
               {/* أحدث المعاملات */}
-              <div className="table-section">
+              {/* <div className="table-section">
                 <h3>أحدث المعاملات</h3>
                 <div className="recent-transactions">
                   {stats.recentExpenses.slice(0, 5).map((expense: any) => (
@@ -343,7 +438,7 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
         </>
