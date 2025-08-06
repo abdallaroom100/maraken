@@ -8,7 +8,10 @@ const expensesSchema = new Schema({
     type: {
         type: String,
         required: true,
-        enum: ['general', 'salary', 'other']
+        enum: [
+          'general', 'salary', 'other',
+          'مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'رواتب', 'أخرى', 'عامة'
+        ]
     },
     adminId:{
         type: mongoose.Schema.Types.ObjectId,
