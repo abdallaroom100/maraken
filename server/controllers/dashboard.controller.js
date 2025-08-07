@@ -351,15 +351,22 @@ export const getSalaryStats = async (req, res) => {
                     from: "workers",
                     localField: "workerId",
                     foreignField: "_id",
-                    as: "worker"
+                    as: "worker",
+                    
                 }
             },
             { $unwind: "$worker" },
+            {
+                $match: {
+                    "worker.isActive": true
+                }
+            },
             {
                 $group: {
                     _id: "$workerId",
                     workerName: { $first: "$worker.name" },
                     workerJob: { $first: "$worker.job" },
+                 
                     totalSalary: { $sum: "$amount" },
                     paymentsCount: { $sum: 1 }
                 }
@@ -382,10 +389,10 @@ export const getSalaryStats = async (req, res) => {
 
         // أحدث مدفوعات الرواتب
         const recentSalaryPayments = await SalaryPayment.find(salaryQuery)
-            .populate('workerId', 'name job')
+            .populate('workerId', 'name job isActive')
             .populate('adminId', 'name')
             .sort({ createdAt: -1 })
-            .limit(10);
+            .limit(5);
 
         // إحصائيات الرواتب حسب المدير
         const salariesByAdmin = await SalaryPayment.aggregate([

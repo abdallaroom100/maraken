@@ -354,11 +354,12 @@ const Dashboard = () => {
               )} */}
 
               {/* أحدث مدفوعات الرواتب */}
-              {salaryStats.recentSalaryPayments && salaryStats.recentSalaryPayments.length > 0 && (
+              {salaryStats.recentSalaryPayments  && salaryStats.recentSalaryPayments.length > 0 && (
                 <div className="recent-salary-payments">
                   <h4>أحدث مدفوعات الرواتب</h4>
                   <div className="salary-payments-list">
                     {salaryStats.recentSalaryPayments.map((payment: any) => (
+                      payment.workerId.isActive && (
                       <div key={payment._id} className="salary-payment-item">
                         <div className="payment-info">
                           <div className="worker-name">{payment.workerId?.name}</div>
@@ -373,6 +374,7 @@ const Dashboard = () => {
                            payment.paymentMethod === 'bank' ? 'بنك' : 'شيك'}
                         </div>
                       </div>
+                      )
                     ))}
                   </div>
                 </div>

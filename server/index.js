@@ -11,6 +11,7 @@ import revenueRoutes from "./routes/revenue.routes.js";
 import adminRoutes from "./routes/admin.routes.js"
 import dashboardRoutes from "./routes/dashboard.routes.js"
 import workerRoutes from "./routes/worker.routes.js"
+import operationsRoutes from "./routes/operations.routes.js"
 dotenv.config() 
 
  const __filename = fileURLToPath(import.meta.url)
@@ -29,6 +30,7 @@ app.use("/api/revenues", revenueRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/workers", workerRoutes);
+app.use("/api/operations", operationsRoutes);
 
 // Serve static files first
 app.use(express.static(path.join(__dirname, "../client/dist")));

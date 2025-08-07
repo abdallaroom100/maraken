@@ -17,6 +17,8 @@ import RevenuesList from './pages/RevenuesList'
 import ExpensesList from './pages/ExpensesList'
 import RevenueEdit from './pages/RevenueEdit'
 import ExpenseEdit from './pages/ExpenseEdit'
+import OperationsLog from './pages/OperationsLog'
+
 import './App.css'
 
 function App() {
@@ -151,6 +153,14 @@ function App() {
           <ProtectedRoute admin={admin} loading={loading}>
             <Layout admin={admin}>
               <ExpenseEdit />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/operations-log" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <OperationsLog />
             </Layout>
           </ProtectedRoute>
         } />

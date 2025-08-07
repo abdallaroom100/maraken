@@ -21,6 +21,7 @@ const Layout = ({ children, admin }: LayoutProps) => {
       { path: '/', icon: 'fas fa-home', label: 'لوحة التحكم' },
       { path: '/employees', icon: 'fas fa-user-plus', label: 'إضافة موظف' },
       { path: '/workers-list', icon: 'fas fa-users', label: 'قائمة الموظفين' },
+      { path: '/operations-log', icon: 'fas fa-history', label: 'سجل العمليات' },
       // { path: '/expenses', icon: 'fas fa-wallet', label: 'المصروفات' },
       // { path: '/expenses-list', icon: 'fas fa-list-alt', label: 'سجل المصروفات' },
       // { path: '/revenues', icon: 'fas fa-coins', label: 'الإيرادات' },
