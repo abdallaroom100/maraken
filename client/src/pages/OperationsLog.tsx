@@ -42,7 +42,7 @@ const OperationsLog = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [operations, setOperations] = useState<OperationsData | null>(null);
   const [currentMonthStats, setCurrentMonthStats] = useState<any>(null);
-
+  console.log(currentMonthStats)
   // فلاتر
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
