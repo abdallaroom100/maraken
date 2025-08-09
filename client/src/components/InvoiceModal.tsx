@@ -74,8 +74,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, invoiceId,
   };
 
   const subtotal = invoice?.products.reduce((t, p) => t + calcProductTotal(p), 0) || 0;
-  const vat = invoice?.products.reduce((t, p) => t + (p.tax === 'القيمة المضافة' ? calcProductTotal(p) * 0.14 : 0), 0) || 0;
-  const grand = subtotal + vat;
+  // const vat = invoice?.products.reduce((t, p) => t + (p.tax === 'القيمة المضافة' ? calcProductTotal(p) * 0.14 : 0), 0) || 0;
+ 
 
   const printPdf = () => {
     // إنشاء نافذة جديدة للطباعة

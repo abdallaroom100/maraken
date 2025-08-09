@@ -182,7 +182,7 @@ const EditInvoice: React.FC = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        
         toast.success('تم تحديث الفاتورة بنجاح');
         navigate('/invoices-list');
       } else {

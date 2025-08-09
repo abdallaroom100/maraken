@@ -156,7 +156,7 @@ const CreateInvoice: React.FC = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        
         toast.success('تم إنشاء الفاتورة بنجاح');
         navigate('/invoices-list');
       } else {
