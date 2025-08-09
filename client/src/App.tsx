@@ -18,6 +18,10 @@ import ExpensesList from './pages/ExpensesList'
 import RevenueEdit from './pages/RevenueEdit'
 import ExpenseEdit from './pages/ExpenseEdit'
 import OperationsLog from './pages/OperationsLog'
+import CreateInvoice from './pages/CreateInvoice'
+import InvoicesList from './pages/InvoicesList'
+import InvoicePreview from './pages/InvoicePreview'
+import EditInvoice from './pages/EditInvoice'
 
 import './App.css'
 
@@ -161,6 +165,38 @@ function App() {
           <ProtectedRoute admin={admin} loading={loading}>
             <Layout admin={admin}>
               <OperationsLog />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/create-invoice" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <CreateInvoice />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/invoices-list" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <InvoicesList />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/invoice/preview/:id" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <InvoicePreview />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/invoice/edit/:id" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <EditInvoice />
             </Layout>
           </ProtectedRoute>
         } />

@@ -1,0 +1,317 @@
+.invoice-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.invoice-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.loading, .error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.loading i {
+  font-size: 32px;
+  color: #3b82f6;
+  margin-bottom: 16px;
+}
+
+.loading p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.error i {
+  font-size: 32px;
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.error p {
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Invoice Preview Styles */
+.invoice-preview {
+  font-family: 'Tajawal', sans-serif;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.brand-mark {
+  width: 180px;
+  height: 20px;
+  background: #274b8f;
+  border-radius: 4px;
+}
+
+.parties {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+
+.parties .label {
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.parties .name {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.parties .business {
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.parties .addr {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.meta {
+  margin-bottom: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.meta div {
+  margin-bottom: 4px;
+}
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.items th, .items td {
+  padding: 12px 8px;
+  border: 1px solid #e5e7eb;
+  text-align: right;
+}
+
+.items th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.items td {
+  color: #1e293b;
+}
+
+.items tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.totals {
+  width: 350px;
+  margin-top: 25px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.totals .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.totals .row:last-child {
+  border-bottom: none;
+}
+
+.totals .row.grand {
+  background: #1e40af;
+  color: white;
+  font-weight: 700;
+}
+
+.modal-actions {
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.print-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.print-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .invoice-modal-overlay {
+    padding: 10px;
+  }
+  
+  .invoice-modal {
+    max-height: 95vh;
+  }
+  
+  .modal-content {
+    padding: 16px;
+  }
+  
+  .parties {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .items {
+    font-size: 12px;
+  }
+  
+  .items th, .items td {
+    padding: 8px 4px;
+  }
+  
+  .totals {
+    width: 100%;
+  }
+}
+
+/* Scrollbar Styling */
+.invoice-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.invoice-modal::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.invoice-modal::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.invoice-modal::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+} 
+
+.logo-placeholder {
+  
+  height: 120px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  overflow: hidden;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+} 

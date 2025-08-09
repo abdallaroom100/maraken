@@ -1,0 +1,121 @@
+/* Container */
+.invoice-preview-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.back-btn, .print-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.back-btn {
+  background: #f3f4f6;
+}
+
+.print-btn {
+  background: #1e40af;
+  color: #fff;
+}
+
+/* A4 Page */
+.invoice-a4 {
+  background: #fff;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.brand-mark {
+  width: 220px;
+  height: 26px;
+  background: #274b8f;
+  border-radius: 6px;
+}
+
+.parties {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.parties .label {
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.parties .name {
+  font-weight: 700;
+}
+
+.meta {
+  margin-bottom: 20px;
+}
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.items th, .items td {
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  text-align: right;
+}
+
+.items th {
+  background: #f8fafc;
+}
+
+.totals {
+  width: 350px;
+  margin-top: 20px;
+}
+
+.totals .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+}
+
+.totals .row:first-child {
+  border-top: 1px solid #e5e7eb;
+}
+
+.totals .row.grand {
+  font-weight: 700;
+}
+
+/* Print Styles */
+@media print {
+  body * { visibility: hidden; }
+  .invoice-a4, .invoice-a4 * { visibility: visible; }
+  .invoice-a4 { position: absolute; left: 0; top: 0; right: 0; margin: 0 auto; box-shadow: none; border: none; }
+  .no-print { display: none !important; }
+} 
