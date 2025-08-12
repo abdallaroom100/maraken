@@ -94,13 +94,13 @@
 }
 
 .filter-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  /* border-color: #3b82f6;
+  color: #3b82f6; */
 }
 
 .filter-btn.active {
-  background: #1e40af;
-  border-color: #1e40af;
+  background: linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%);
+
   color: white;
 }
 
@@ -130,7 +130,7 @@
 
 .stat-card i {
   font-size: 24px;
-  color: #1e40af;
+  color: #46474b;
   width: 50px;
   height: 50px;
   display: flex;
@@ -212,7 +212,7 @@
 .invoice-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
+  border-color: #233b28;
 }
 
 .invoice-header {
@@ -234,8 +234,8 @@
 }
 
 .type-badge.individual {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #6e6f77;
+  color: white;
 }
 
 .type-badge.business {
@@ -251,6 +251,7 @@
 .invoice-actions button {
   width: 35px;
   height: 35px;
+  margin: 0;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -354,7 +355,7 @@
 }
 
 .total-amount {
-  color: #1e40af;
+  color: #1c1c1d;
   font-weight: 700;
   font-size: 16px;
 }

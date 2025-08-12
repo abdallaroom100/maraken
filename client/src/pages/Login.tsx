@@ -144,6 +144,7 @@ const Login = () => {
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
+          <div className=' w-full mx-auto flex justif-center items-center'>
           <button 
             type="submit" 
             className="login-btn"
@@ -151,6 +152,7 @@ const Login = () => {
           >
             {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>
+          </div>
         </form>
 
         <div className="login-footer">

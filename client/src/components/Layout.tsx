@@ -130,13 +130,15 @@ const Layout = ({ children, admin }: LayoutProps) => {
               className="nav-link"
               style={{ 
                 width: '100%', 
-                background: 'none', 
+                background: '#c51c1c', 
                 border: 'none',
+                color:"white",
+              
                 cursor: 'pointer',
                 fontFamily: 'inherit'
               }}
             >
-              <i className="fas fa-sign-out-alt nav-icon"></i>
+              <i className="fas fa-sign-out-alt nav-icon" style={{color:'white'}}></i>
               <span>تسجيل الخروج</span>
             </button>
           </li>
