@@ -417,7 +417,12 @@
     padding: 8px 10px;
   }
 } 
-
+@media (max-width:991px){
+ .salary-stats-section{
+  display: block;
+  margin-top: 9rem !important;
+ }
+}
 /* إحصائيات الرواتب */
 .salary-stats-section {
   background: white;

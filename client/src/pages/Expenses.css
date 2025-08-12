@@ -10,6 +10,7 @@ table {
   border-radius: 12px;
   overflow: hidden;
   margin-top: 24px;
+  max-width: max-content;
 }
 thead th {
   background: #3a4f41;
@@ -102,5 +103,5 @@ button[style*='red'] {
 }
 button[style*='red']:hover {
   background: #c0392b;
-  color: #fff;
+  color: #fff !important;
 } 

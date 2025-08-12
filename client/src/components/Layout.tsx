@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -15,6 +15,41 @@ type MenuLists ={
 const Layout = ({ children, admin }: LayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { logout } = useAuth()
+  
+  // إغلاق القائمة عند تغيير حجم الشاشة
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsSidebarOpen(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // إغلاق القائمة عند النقر خارجها
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.getElementById('sidebar')
+      const toggleButton = document.querySelector('.mobile-menu-toggle')
+      
+      if (sidebar && toggleButton && isSidebarOpen) {
+        if (!sidebar.contains(event.target as Node) && !toggleButton.contains(event.target as Node)) {
+          setIsSidebarOpen(false)
+        }
+      }
+    }
+
+    if (isSidebarOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isSidebarOpen])
+
   let menuItems:MenuLists[] = [];
   if (admin?.role === 'manager') {
     menuItems = [
@@ -77,9 +112,16 @@ const Layout = ({ children, admin }: LayoutProps) => {
       <button 
         className="mobile-menu-toggle"
         onClick={toggleSidebar}
+        aria-label="فتح القائمة"
       >
         <i className="fas fa-bars"></i>
       </button>
+
+      {/* Overlay للموبايل */}
+      <div 
+        className={`mobile-overlay ${isSidebarOpen ? 'active' : ''}`}
+        onClick={closeSidebar}
+      />
 
       {/* الشريط الجانبي الجديد */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`} id="sidebar">

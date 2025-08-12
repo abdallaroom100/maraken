@@ -10,6 +10,7 @@ table {
   border-radius: 12px;
   overflow: hidden;
   margin-top: 24px;
+  min-width: -webkit-fill-available;
 }
 thead th {
   /* background: #e3f0fd; */
