@@ -94,8 +94,9 @@ const Revenues = () => {
           </div>
 
           <button 
-            className='max-w-[400px] !mx-auto w-full' 
+            className='w-[400px] !mx-auto w-full !mx-auto' 
             type="submit"
+            style={{margin:"auto",minWidth:"300px"}}
             disabled={loading}
           >
             {loading ? 'جاري الإضافة...' : 'إضافة إيراد'}

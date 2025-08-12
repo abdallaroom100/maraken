@@ -51,7 +51,7 @@ const InvoicePreview: React.FC = () => {
   };
 
   const subtotal = invoice?.products.reduce((t, p) => t + calcProductTotal(p), 0) || 0;
-  const vat = invoice?.products.reduce((t, p) => t + (p.tax === 'القيمة المضافة' ? calcProductTotal(p) * 0.14 : 0), 0) || 0;
+  const vat = invoice?.products.reduce((t, p) => t + (p.tax === 'القيمة المضافة' ? calcProductTotal(p) * 0.15 : 0), 0) || 0;
   const grand = subtotal + vat;
 
   const printPdf = () => {
@@ -128,7 +128,7 @@ const InvoicePreview: React.FC = () => {
 
         <div className="totals">
           <div className="row"><span>المجموع:</span><span>{subtotal.toFixed(2)} ج.م</span></div>
-          <div className="row"><span>القيمة المضافة (14%):</span><span>{vat.toFixed(2)} ج.م</span></div>
+          <div className="row"><span>القيمة المضافة (15%):</span><span>{vat.toFixed(2)} ج.م</span></div>
           <div className="row grand"><span>الإجمالي:</span><span>{grand.toFixed(2)} ج.م</span></div>
         </div>
       </div>

@@ -60,6 +60,17 @@ const Layout = ({ children, admin }: LayoutProps) => {
     // لا حاجة لـ navigate لأن logout function تعيد التوجيه تلقائياً
   }
 
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'manager':
+        return 'مدير النظام';
+      case 'moderator':
+        return 'مشرف';
+      default:
+        return role;
+    }
+  }
+
   return (
     <div className="layout">
       {/* زر القائمة للموبايل */}
@@ -70,58 +81,63 @@ const Layout = ({ children, admin }: LayoutProps) => {
         <i className="fas fa-bars"></i>
       </button>
 
-      {/* الشريط الجانبي */}
+      {/* الشريط الجانبي الجديد */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`} id="sidebar">
-        <ul>
-          <li className="logo-item">
+        {/* Header الجديد مع اللوجو */}
+        <div className="sidebar-header">
+          <div className="logo-container">
             <img 
-              src="/img/15848176933.png" 
-              alt="Logo" 
-              style={{ width: '90px', borderRadius: '50%', border: '#1a1a1a 2px solid' }}
+              src="/img/maraken.jpg" 
+              alt="مراكن الورد" 
+              className="logo-image"
             />
-            <h3>مراكن الورد</h3>
-            {admin && (
-              <p style={{ fontSize: '12px', color: '#aad4ff', marginTop: '5px' }}>
-                {admin.name}
-              </p>
-            )}
-          </li>
+            {/* <h1>مراكن الورد</h1> */}
+                         {admin && (
+               <div className="admin-info">
+                 <div className="admin-field">
+                   <span className="admin-label">الأسم:</span>
+                   <span className="admin-value">{admin.name}</span>
+                 </div>
+                 <div className="admin-field">
+                   <span className="admin-label">الدور:</span>
+                   <span className="admin-value">{getRoleDisplayName(admin.role)}</span>
+                 </div>
+               </div>
+             )}
+          </div>
           
+        </div>
+
+        {/* قائمة التنقل الجديدة */}
+        <ul className="nav-menu">
           {menuItems.map((item) => (
-            <li key={item.path}>
+            <li key={item.path} className="nav-item">
               <NavLink 
                 to={item.path}
-                className={({ isActive }) => isActive ? 'menu-link active' : 'menu-link'}
-                style={{ textDecoration: 'none', color: 'inherit' }}
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
                 onClick={closeSidebar}
               >
-                <div className="menu-item-content">
-                  <i className={item.icon}></i>
-                  <span>{item.label}</span>
-                </div>
+                <i className={`${item.icon} nav-icon`}></i>
+                <span>{item.label}</span>
               </NavLink>
             </li>
           ))}
           
-         
-
           {/* زر تسجيل الخروج */}
-          <li className='!mt-0'>
+          <li className="nav-item">
             <button 
               onClick={handleLogout}
-              className="menu-link"
+              className="nav-link"
               style={{ 
                 width: '100%', 
                 background: 'none', 
-                border: 'none', 
-                textAlign: 'right',
-                cursor: 'pointer'
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit'
               }}
             >
-              <div className="menu-item-content">
-                <i className="fas fa-sign-out-alt"></i>
-                <span>تسجيل الخروج</span>
-              </div>
+              <i className="fas fa-sign-out-alt nav-icon"></i>
+              <span>تسجيل الخروج</span>
             </button>
           </li>
         </ul>

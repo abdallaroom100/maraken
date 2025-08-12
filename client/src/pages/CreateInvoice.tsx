@@ -97,7 +97,7 @@ const CreateInvoice: React.FC = () => {
   const calculateTax = (): number => {
     return products.reduce((total, product) => {
       if (product.tax === 'القيمة المضافة') {
-        return total + (calculateProductTotal(product) * 0.14);
+        return total + (calculateProductTotal(product) * 0.15);
       }
       return total;
     }, 0);
@@ -560,7 +560,7 @@ const CreateInvoice: React.FC = () => {
                           className="tax-select"
                         >
                         <option value="">بدون ضريبة</option>
-                        <option value="القيمة المضافة">القيمة المضافة (14%)</option>
+                        <option value="القيمة المضافة">القيمة المضافة (15%)</option>
                       </select>
                     </td>
                     <td className="total-cell">
@@ -593,7 +593,7 @@ const CreateInvoice: React.FC = () => {
               <span className="summary-value">{calculateGrandTotal().toFixed(2)} ج.م</span>
             </div>
             <div className="summary-row">
-              <span className="summary-label">القيمة المضافة (14%):</span>
+              <span className="summary-label">القيمة المضافة (15%):</span>
               <span className="summary-value">{calculateTax().toFixed(2)} ج.م</span>
             </div>
             <div className="summary-row total-row">

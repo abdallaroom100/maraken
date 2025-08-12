@@ -131,6 +131,29 @@
   margin-top: 20px;
 }
 
+.expenses form,.revenues form {
+  display: flex;
+  flex-direction: column;
+}
+.expenses form button,.revenues form button {
+ max-width: 300px;
+ text-align: center;
+
+}
+.expenses .form-row, 
+.revenues .form-row{
+    display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+
+
+
+
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
