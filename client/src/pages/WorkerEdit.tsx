@@ -522,7 +522,7 @@ const WorkerEdit = () => {
   }
 
   return (
-    <div className="!min-h-screen !bg-gradient-to-br !from-gray-50 !to-blue-50 !py-6">
+    <div className="container !min-h-screen !bg-gradient-to-br !from-gray-50 !to-blue-50 !py-6">
       {/* Header */}
       <div className="!max-w-7xl !mx-auto !px-4 !mb-8">
         <div className="!bg-white !rounded-xl !shadow-lg !p-6">
@@ -534,7 +534,7 @@ const WorkerEdit = () => {
               <span className="!text-lg">←</span>
               العودة لقائمة الموظفين
             </button>
-            <h1 className="!text-2xl !font-bold !text-gray-800 !bg-gradient-to-r !from-blue-600 !to-purple-600 !bg-clip-text !text-transparent">
+            <h1 className="page-title !text-2xl !font-bold !text-gray-800 !bg-gradient-to-r !from-blue-600 !to-purple-600 !bg-clip-text !text-transparent">
               تعديل بيانات الموظف
             </h1>
           </div>
@@ -542,47 +542,17 @@ const WorkerEdit = () => {
       </div>
 
       <div className="!max-w-7xl !mx-auto md:!px-4 !space-y-8">
-    
-        {/* <div className="!bg-white !rounded-xl !shadow-lg !overflow-hidden">
-          <div className="!bg-gradient-to-r !from-blue-600 !to-purple-600 !px-6 !py-4">
-            <h2 className="!text-xl !font-bold !text-white">معلومات الموظف</h2>
-          </div>
-          <div className="!p-6">
-            <div className="!grid !grid-cols-1 !md:grid-cols-2 !lg:grid-cols-3 !gap-6">
-              <div className="!bg-gray-50 !rounded-lg !p-4 !border-l-4 !border-blue-500">
-                <div className="!text-sm !text-gray-600 !mb-1">الاسم</div>
-                <div className="!text-lg !font-semibold !text-gray-800">{worker.name}</div>
-              </div>
-              <div className="!bg-gray-50 !rounded-lg !p-4 !border-l-4 !border-green-500">
-                <div className="!text-sm !text-gray-600 !mb-1">الوظيفة</div>
-                <div className="!text-lg !font-semibold !text-gray-800">{worker.job}</div>
-              </div>
-              <div className="!bg-gray-50 !rounded-lg !p-4 !border-l-4 !border-yellow-500">
-                <div className="!text-sm !text-gray-600 !mb-1">الراتب الأساسي</div>
-                <div className="!text-lg !font-semibold !text-gray-800">{worker.basicSalary.toLocaleString()} ريال</div>
-              </div>
-              <div className="!bg-gray-50 !rounded-lg !p-4 !border-l-4 !border-purple-500">
-                <div className="!text-sm !text-gray-600 !mb-1">رقم الهوية</div>
-                <div className="!text-lg !font-semibold !text-gray-800">{worker.identityNumber}</div>
-              </div>
-              <div className="!bg-gray-50 !rounded-lg !p-4 !border-l-4 !border-red-500">
-                <div className="!text-sm !text-gray-600 !mb-1">تاريخ الإضافة</div>
-                <div className="!text-lg !font-semibold !text-gray-800">{new Date(worker.createdAt).toLocaleDateString('ar-SA')}</div>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
+      
         {/* تحديث بيانات الموظف */}
-        <div className="!bg-white !rounded-xl !shadow-lg !overflow-hidden">
+        <div className="form-section !bg-white !rounded-xl !shadow-lg !overflow-hidden">
           <div className="!bg-gradient-to-r !from-green-600 !to-teal-600 !px-6 !py-4">
             <h2 className="!text-xl !font-bold !text-white">تحديث بيانات الموظف</h2>
           </div>
           <div className="md:!p-6">
             <form onSubmit={handleUpdateWorker} className="!space-y-6 ">
              <div className='flex flex-col '>
-             <div className="!grid !grid-cols-1 !md:grid-cols-2 !gap-6">
-                <div className="!space-y-2">
+             <div className="form-row !grid !grid-cols-1 !md:grid-cols-2 !gap-6">
+                <div className="form-group !space-y-2">
                   <label htmlFor="name" className="!block !text-sm !font-medium !text-gray-700">اسم الموظف</label>
                   <input
                     type="text"
@@ -593,7 +563,7 @@ const WorkerEdit = () => {
                     required
                   />
                 </div>
-                <div className="!space-y-2 min-w-[210px]">
+                <div className="form-group !space-y-2 min-w-[210px]">
                   <label htmlFor="job" className="!block !text-sm !font-medium !text-gray-700">الوظيفة</label>
                   <input
                     type="text"
@@ -604,7 +574,7 @@ const WorkerEdit = () => {
                     required
                   />
                 </div>
-                <div className="!space-y-2 min-w-[210px]">
+                <div className="form-group !space-y-2 min-w-[210px]">
                   <label htmlFor="basicSalary" className="!block !text-sm !font-medium !text-gray-700">الراتب الأساسي (ريال)</label>
                   <input
                     type="number"
@@ -616,7 +586,7 @@ const WorkerEdit = () => {
                     required
                   />
                 </div>
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="identityNumber" className="!block !text-sm !font-medium !text-gray-700">رقم الهوية</label>
                   <input
                     type="text"
@@ -632,7 +602,8 @@ const WorkerEdit = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="!w-full !md:w-auto !px-8 !py-3 max-w-[400px] mx-auto text-center flex justify-center  !bg-gradient-to-r !from-green-600 !to-teal-600 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-teal-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105"
+                style={{maxWidth: '300px', margin: 'auto',background:"linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%)"}}
+                className="update-btn !w-full !md:w-auto !px-8 !py-3 max-w-[400px] mx-auto text-center flex justify-center  !bg-gradient-to-r !from-green-600 !to-teal-600 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-teal-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105"
               >
                 {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
               </button>
@@ -644,7 +615,7 @@ const WorkerEdit = () => {
         </div>
 
         {/* إدارة الرواتب */}
-        <div className="!bg-white !rounded-xl !shadow-lg !overflow-hidden">
+        <div className="salary-section !bg-white !rounded-xl !shadow-lg !overflow-hidden">
           <div className="!bg-gradient-to-r !from-purple-600 !to-pink-600 !px-6 !py-4">
             <h2 className="!text-xl !font-bold !text-white">إدارة الرواتب</h2>
           </div>
@@ -665,9 +636,9 @@ const WorkerEdit = () => {
               </div>
             </div>
             
-            <form onSubmit={handleSalarySubmit} className="!p-0 md:!p-4 sm:!space-y-6 !flex flex-col">
-              <div className="container mx-auto w-full !flex flex-wrap !gap-6  items-center">
-              <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+            <form onSubmit={handleSalarySubmit} className="salary-form !p-0 md:!p-4 sm:!space-y-6 !flex flex-col">
+              <div className="form-row container mx-auto w-full !flex flex-wrap !gap-6  items-center">
+              <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="month" className="!block !text-sm !font-medium !text-gray-700">الشهر</label>
                   <select
                     id="month"
@@ -683,7 +654,7 @@ const WorkerEdit = () => {
                 </div>
 
  
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
     <label htmlFor="year" className="!block !text-sm !font-medium !text-gray-700">السنة</label>
     <select
       id="year"
@@ -697,7 +668,7 @@ const WorkerEdit = () => {
       ))}
     </select>
   </div>
-  <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+  <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="basicSalary" className="!block !text-sm !font-medium !text-gray-700">الراتب الأساسي (ريال)</label>
                   <input
                     type="number"
@@ -709,7 +680,7 @@ const WorkerEdit = () => {
                     required
                   />
                 </div>
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="absenceDays" className="!block !text-sm !font-medium !text-gray-700">أيام الغياب</label>
                   <input
                     type="number"
@@ -721,7 +692,7 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="incentives" className="!block !text-sm !font-medium !text-gray-700">الحوافز (ريال)</label>
                   <input
                     type="number"
@@ -732,7 +703,7 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="deductions" className="!block !text-sm !font-medium !text-gray-700">الخصومات (ريال)</label>
                   <input
                     type="number"
@@ -743,7 +714,7 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
-                <div className="!space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="withdrawals" className="!block !text-sm !font-medium !text-gray-700">السحبيات (ريال)</label>
                   <input
                     type="number"
@@ -754,7 +725,7 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
-                <div className="!space-y-2 !md:col-span-2 w-full !lg:col-span-1 lg:min-w-[210px]">
+                <div className="form-group !space-y-2 !md:col-span-2 w-full !lg:col-span-1 lg:min-w-[450px]">
                   <label htmlFor="notes" className="!block !text-sm !font-medium !text-gray-700">ملاحظات</label>
                   <textarea
                     id="notes"
@@ -762,21 +733,15 @@ const WorkerEdit = () => {
                     onChange={handleSalaryInputChange}
                     rows={3}
                     placeholder="أضف ملاحظات حول الراتب..."
-                    className="!w-full lg:!w-auto lg:min-w-[450px] !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300 !resize-none"
+                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300 !resize-none"
                   />
                 </div>
-          
+        
 
               </div>
-              {/* <div className="!grid !grid-cols-1 !md:grid-cols-2 !gap-6">
-                
-              </div> */}
               
-              {/* بيانات الراتب */}
-             
-
               {/* أزرار الإجراءات */}
-              <div  className="!flex !flex-wrap !gap-4 !pt-6 !border-t !border-gray-200 !justify-center !items-center">
+              <div  className="salary-buttons !flex !flex-wrap !gap-4 !pt-6 !border-t !border-gray-200 !justify-center !items-center">
                 {/* زر تحديث البيانات */}
 
                 {/* زر دفع الراتب أو إلغاء الدفع */}
@@ -786,7 +751,7 @@ const WorkerEdit = () => {
                   onClick={handleUpdateSalaryData}
                   title='تحديث البيانات'
                   disabled={isSubmitting || !currentSalary}
-                  className="!flex-1 !min-w-0 !px-6 !py-3 text-nowrap !bg-gradient-to-r !from-blue-600 !to-blue-700 !text-white !font-semibold !rounded-lg !hover:from-blue-700 !hover:to-blue-800 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                  className="salary-btn bg-blue-600 !flex-1 !min-w-0 !px-6 !py-3 text-nowrap !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
                 >
                   {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
                 </button>
@@ -795,7 +760,7 @@ const WorkerEdit = () => {
                     type="button" 
                     onClick={handleCancelPayment}
                     disabled={isSubmitting}
-                    className="!flex-1 !min-w-0 !px-6 !py-3 !bg-gradient-to-r !from-red-600 !to-red-700 !text-white !font-semibold !rounded-lg !hover:from-red-700 !hover:to-red-800 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    className="salary-btn bg-red-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
                   >
                     {isSubmitting ? 'جاري الإلغاء...' : '❌ إلغاء الدفع'}
                   </button>
@@ -804,7 +769,7 @@ const WorkerEdit = () => {
                     type="button" 
                     onClick={handleMarkAsPaid}
                     disabled={isSubmitting || !currentSalary}
-                    className="!flex-1 !min-w-0 !px-6 !py-3 !bg-gradient-to-r !from-green-600 !to-green-700 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-green-800 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    className="salary-btn bg-green-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
                   >
                     {isSubmitting ? 'جاري الدفع...' : '✅ دفع الراتب'}
                   </button>
@@ -816,7 +781,7 @@ const WorkerEdit = () => {
                     type="button" 
                     onClick={handleSalarySubmit}
                     disabled={isSubmitting}
-                    className="!flex-1 !min-w-0 !px-6 !py-3 !bg-gradient-to-r !from-purple-600 !to-purple-700 !text-white !font-semibold !rounded-lg !hover:from-purple-700 !hover:to-purple-800 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    className="salary-btn bg-purple-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
                   >
                     {isSubmitting ? 'جاري الحفظ...' : '💾 حفظ ودفع الراتب'}
                   </button>
@@ -832,7 +797,7 @@ const WorkerEdit = () => {
           <div className="!bg-gradient-to-r !from-indigo-600 !to-purple-600 !px-6 !py-4">
             <h2 className="!text-xl !font-bold !text-white">تاريخ الرواتب</h2>
           </div>
-          <div className="!p-6">
+          <div className="table-responsive !p-6">
             {loadingSalary ? (
               <div className="!flex !items-center !justify-center !py-12">
                 <div className="!flex !flex-col !items-center !space-y-4">
