@@ -70,14 +70,17 @@ export const getOperationsLog = async (req, res) => {
                 expenseQuery.adminId = adminId;
             }
 
-            // إضافة فلتر النوع (type) - مع استثناء salary دائماً
+            // إضافة فلتر النوع (type)
             if (type && type !== 'all') {
-                // إذا كان الفلتر على type محدد، نستخدمه مباشرة (لأن types المسموحة لا تحتوي على salary)
-                expenseQuery.type = type;
-            } else {
-                // إذا لم يكن هناك فلتر type، نستبعد salary فقط
-                expenseQuery.type = { $ne: "salary" };
+                // إذا كان الفلتر على type محدد، نستخدمه مباشرة
+                // إذا كان type = "رواتب"، نبحث عن "salary" أيضاً
+                if (type === 'رواتب') {
+                    expenseQuery.type = { $in: ['رواتب', 'salary'] };
+                } else {
+                    expenseQuery.type = type;
+                }
             }
+            // إذا لم يكن هناك فلتر type، نعرض جميع المصروفات (بما في ذلك salary/رواتب)
 
             const expenses = await Expenses.find(expenseQuery)
                 .populate('adminId', 'name email')
@@ -137,10 +140,8 @@ export const getOperationTypes = async (req, res) => {
         // أنواع الإيرادات
         const revenueTypes = ['مبيعات', 'خدمات', 'إيجارات', 'استثمارات', 'أخرى'];
         
-        // أنواع المصروفات (مع استثناء salary و رواتب)
-        // نرجع فقط الأنواع العربية التي نريد عرضها في سجل العمليات
-        const expenseTypes = ['مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'أخرى', 'عامة'];
-        // ملاحظة: 'رواتب' و 'salary' مستثناة لأنها تظهر في قسم الرواتب
+        // أنواع المصروفات (بما في ذلك الرواتب)
+        const expenseTypes = ['مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'رواتب', 'أخرى', 'عامة'];
 
         res.status(200).json({
             message: "تم جلب أنواع العمليات بنجاح",
