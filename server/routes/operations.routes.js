@@ -2,7 +2,8 @@ import express from "express";
 import {
     getOperationsLog,
     getAdminsList,
-    getCurrentMonthStats
+    getCurrentMonthStats,
+    getOperationTypes
 } from "../controllers/operations.controller.js";
 import { verifyToken, requireRole } from "../middleware/auth.middleware.js";
 
@@ -17,6 +18,9 @@ router.get("/log", getOperationsLog);
 
 // جلب قائمة الأدمن
 router.get("/admins", getAdminsList);
+
+// جلب جميع أنواع العمليات المتاحة
+router.get("/types", getOperationTypes);
 
 // جلب إحصائيات الشهر الحالي
 router.get("/current-month-stats", getCurrentMonthStats);

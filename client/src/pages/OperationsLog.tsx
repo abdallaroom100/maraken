@@ -36,18 +36,26 @@ interface OperationsData {
   netProfit: number;
 }
 
+interface OperationTypes {
+  revenues: string[];
+  expenses: string[];
+  all: string[];
+}
+
 const OperationsLog = () => {
   const { admin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [operations, setOperations] = useState<OperationsData | null>(null);
   const [currentMonthStats, setCurrentMonthStats] = useState<any>(null);
+  const [operationTypes, setOperationTypes] = useState<OperationTypes | null>(null);
   console.log(currentMonthStats)
   // فلاتر
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedOperationType, setSelectedOperationType] = useState('all');
   const [selectedAdminId, setSelectedAdminId] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
 
   // التحقق من أن المستخدم مدير
   useEffect(() => {
@@ -57,17 +65,23 @@ const OperationsLog = () => {
     // }
   }, [admin]);
 
-  // جلب قائمة الأدمن
+  // جلب قائمة الأدمن وأنواع العمليات
   useEffect(() => {
     fetchAdmins();
     fetchCurrentMonthStats();
+    fetchOperationTypes();
   }, []);
+
+  // إعادة تعيين selectedType عند تغيير نوع العملية
+  useEffect(() => {
+    setSelectedType('all');
+  }, [selectedOperationType]);
 
   // جلب العمليات عند تغيير الفلاتر
   useEffect(() => {
       fetchOperations();
    
-  }, [selectedYear, selectedMonth, selectedOperationType, selectedAdminId]);
+  }, [selectedYear, selectedMonth, selectedOperationType, selectedAdminId, selectedType]);
 
   const fetchAdmins = async () => {
       let token ;
@@ -125,6 +139,35 @@ const OperationsLog = () => {
     }
   };
 
+  const fetchOperationTypes = async () => {
+    try {
+      let token;
+      try {
+        const admin = JSON.parse(localStorage.getItem('admin') || "{}")
+        if(admin.token){
+           token = admin.token
+        }
+      } catch (error) {
+        console.log(error)
+      }
+      const response = await fetch('/api/operations/types', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOperationTypes(data.types);
+      } else {
+        toast.error('فشل في جلب أنواع العمليات');
+      }
+    } catch (error) {
+      console.error('Error fetching operation types:', error);
+      toast.error('حدث خطأ في جلب أنواع العمليات');
+    }
+  };
+
   const fetchOperations = async () => {
     setLoading(true);
     try {
@@ -141,7 +184,8 @@ const OperationsLog = () => {
         year: selectedYear.toString(),
         month: selectedMonth.toString(),
         operationType: selectedOperationType,
-        adminId: selectedAdminId
+        adminId: selectedAdminId,
+        type: selectedType
       });
 
       const response = await fetch(`/api/operations/log?${params}`, {
@@ -278,6 +322,33 @@ const OperationsLog = () => {
               {admins.map(admin => (
                 <option key={admin._id} value={admin._id}>{admin.name}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>
+              نوع الفئة:
+            </label>
+            <select 
+              value={selectedType} 
+              onChange={(e) => setSelectedType(e.target.value)}
+            >
+              <option value="all">جميع الأنواع</option>
+              {operationTypes && (
+                selectedOperationType === 'revenues' ? (
+                  operationTypes.revenues.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))
+                ) : selectedOperationType === 'expenses' ? (
+                  operationTypes.expenses.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))
+                ) : (
+                  operationTypes.all.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))
+                )
+              )}
             </select>
           </div>
         </div>

@@ -13,6 +13,9 @@ const revenuesSchema = new Schema({
     type: {
         type: String,
         required: true,
+        enum: [
+            'مبيعات', 'خدمات', 'إيجارات', 'استثمارات', 'أخرى'
+        ]
     },
     description: {
         type: String,

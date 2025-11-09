@@ -9,7 +9,8 @@ export const getOperationsLog = async (req, res) => {
             year, 
             month, 
             operationType, // 'revenues', 'expenses', 'all'
-            adminId 
+            adminId,
+            type // نوع العملية (type filter)
         } = req.query;
 
         // التحقق من وجود السنة والشهر
@@ -43,6 +44,11 @@ export const getOperationsLog = async (req, res) => {
                 revenueQuery.adminId = adminId;
             }
 
+            // إضافة فلتر النوع (type)
+            if (type && type !== 'all') {
+                revenueQuery.type = type;
+            }
+
             const revenues = await Revenues.find(revenueQuery)
                 .populate('adminId', 'name email')
                 .sort({ createdAt: -1 });
@@ -57,14 +63,20 @@ export const getOperationsLog = async (req, res) => {
                 createdAt: {
                     $gte: startDate,
                     $lte: endDate
-                },
-                type:{
-                    $ne:"salary"
                 }
             };
 
             if (adminId && adminId !== 'all') {
                 expenseQuery.adminId = adminId;
+            }
+
+            // إضافة فلتر النوع (type) - مع استثناء salary دائماً
+            if (type && type !== 'all') {
+                // إذا كان الفلتر على type محدد، نستخدمه مباشرة (لأن types المسموحة لا تحتوي على salary)
+                expenseQuery.type = type;
+            } else {
+                // إذا لم يكن هناك فلتر type، نستبعد salary فقط
+                expenseQuery.type = { $ne: "salary" };
             }
 
             const expenses = await Expenses.find(expenseQuery)
@@ -85,7 +97,8 @@ export const getOperationsLog = async (req, res) => {
                 year: parseInt(year),
                 month: parseInt(month),
                 operationType,
-                adminId
+                adminId,
+                type: type || 'all'
             }
         });
 
@@ -111,6 +124,35 @@ export const getAdminsList = async (req, res) => {
 
     } catch (error) {
         console.error('Get admins list error:', error);
+        res.status(500).json({ 
+            message: "حدث خطأ في الخادم",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// جلب جميع أنواع العمليات المتاحة (enums)
+export const getOperationTypes = async (req, res) => {
+    try {
+        // أنواع الإيرادات
+        const revenueTypes = ['مبيعات', 'خدمات', 'إيجارات', 'استثمارات', 'أخرى'];
+        
+        // أنواع المصروفات (مع استثناء salary و رواتب)
+        // نرجع فقط الأنواع العربية التي نريد عرضها في سجل العمليات
+        const expenseTypes = ['مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'أخرى', 'عامة'];
+        // ملاحظة: 'رواتب' و 'salary' مستثناة لأنها تظهر في قسم الرواتب
+
+        res.status(200).json({
+            message: "تم جلب أنواع العمليات بنجاح",
+            types: {
+                revenues: revenueTypes,
+                expenses: expenseTypes,
+                all: [...new Set([...revenueTypes, ...expenseTypes])] // جميع الأنواع بدون تكرار
+            }
+        });
+
+    } catch (error) {
+        console.error('Get operation types error:', error);
         res.status(500).json({ 
             message: "حدث خطأ في الخادم",
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
