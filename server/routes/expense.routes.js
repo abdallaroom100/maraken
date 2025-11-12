@@ -7,20 +7,23 @@ import {
     updateExpense,
     deleteExpense
 } from "../controllers/expense.controller.js";
+import { verifyToken, requireRole } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Create expense
-router.post("/:adminId", createExpense);
+router.use(verifyToken);
 
-// Get all expenses
-router.get("/:adminId", getExpenses);
+// Create expense
+router.post("/", createExpense);
+
+// Get expenses with role-based filtering
+router.get("/", getExpenses);
+
+// Manager specific: Get expenses for a particular admin
+router.get("/admin/:adminId", requireRole(["manager"]), getAdminExpenses);
 
 // Get single expense
-router.get("/find/:id", getExpense);
-
-// Get admin expenses
-router.get("/admin/:adminId", getAdminExpenses);
+router.get("/:id", getExpense);
 
 // Update expense
 router.put("/:id", updateExpense);

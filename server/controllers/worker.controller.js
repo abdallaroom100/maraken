@@ -190,4 +190,38 @@ export const getWorkerSalaryHistory = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// Search workers by name
+export const searchWorkers = async (req, res) => {
+    try {
+        const { name } = req.query;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'اسم الموظف مطلوب'
+            });
+        }
+
+        // Search for workers whose name contains the search term (case-insensitive)
+        const workers = await Worker.find({
+            isActive: true,
+            name: { $regex: name.trim(), $options: 'i' } // case-insensitive search
+        })
+        .select('_id name job basicSalary')
+        .limit(20) // Limit to 20 results
+        .sort({ name: 1 });
+
+        res.status(200).json({
+            success: true,
+            data: workers
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'خطأ في البحث عن الموظفين',
+            error: error.message
+        });
+    }
 }; 

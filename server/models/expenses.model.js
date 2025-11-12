@@ -16,6 +16,10 @@ const expensesSchema = new Schema({
     adminId:{
         type: mongoose.Schema.Types.ObjectId,
         ref:"FlowerAdmin",
+        required: true,
+    },
+    adminName: {
+        type: String,
     },
     description: {
         type: String,
@@ -37,10 +41,12 @@ const expensesSchema = new Schema({
         type: String
     },
     year: {
-        type: Number
+        type: Number,
     },
     month: {
-        type: Number
+        type: Number,
+        min: 1,
+        max: 12,
     }
 },{
     timestamps: true,

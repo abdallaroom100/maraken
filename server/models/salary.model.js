@@ -37,6 +37,11 @@ const salarySchema = new Schema({
         type: Number,
         default: 0
     },
+    advance: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     finalSalary: {
         type: Number,
         default: 0
@@ -51,6 +56,17 @@ const salarySchema = new Schema({
     notes: {
         type: String,
         trim: true
+    },
+    advanceCreatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "FlowerAdmin"
+    },
+    advanceCreatedByName: {
+        type: String,
+        trim: true
+    },
+    advanceUpdatedAt: {
+        type: Date
     }
 }, {
     timestamps: true

@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import toast from 'react-hot-toast'
 import './Employees.css'
 
 interface Worker {
@@ -23,6 +25,7 @@ interface Salary {
   incentives: number
   deductions: number
   withdrawals: number
+  advance: number
   finalSalary: number
   isPaid: boolean
   paymentDate?: string
@@ -35,6 +38,7 @@ const WorkerEdit = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const { admin, getToken } = useAuth()
   const workerFromState = location.state?.worker as Worker
 
   const [worker, setWorker] = useState<Worker | null>(workerFromState || null)
@@ -42,6 +46,21 @@ const WorkerEdit = () => {
   const [error, setError] = useState('')
   console.log(error)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [advanceAmount, setAdvanceAmount] = useState('0')
+  const [isAddingAdvance, setIsAddingAdvance] = useState(false)
+  
+  // Check if admin is moderator
+  const isModerator = admin?.role === 'moderator'
+
+  const token = useMemo(() => getToken?.() ?? admin?.token ?? null, [admin, getToken])
+
+  const fetchWithAuth = (input: RequestInfo, init: RequestInit = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+    return fetch(input, { ...init, headers })
+  }
   
   // Form data for worker update
   const [formData, setFormData] = useState({
@@ -60,6 +79,7 @@ const WorkerEdit = () => {
     incentives: '0',
     deductions: '0',
     withdrawals: '0',
+    advance: '0',
     notes: ''
   })
 
@@ -113,7 +133,7 @@ const WorkerEdit = () => {
   const fetchWorker = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/workers/${id}`)
+      const response = await fetchWithAuth(`/api/workers/${id}`)
       const data = await response.json()
       
       if (data.success) {
@@ -141,7 +161,7 @@ const WorkerEdit = () => {
   const fetchSalaryHistory = async () => {
     try {
       setLoadingSalary(true)
-      const response = await fetch(`/api/workers/${worker?._id}/salary-history`)
+      const response = await fetchWithAuth(`/api/workers/${worker?._id}/salary-history`)
       const data = await response.json()
       
       console.log('Salary history response:', data)
@@ -159,7 +179,7 @@ const WorkerEdit = () => {
   const loadSalaryData = async (year: number, month: number) => {
     try {
       // Use a simpler approach - get all salaries for this worker and filter
-      const response = await fetch(`/api/workers/${worker?._id}/salary-history`)
+      const response = await fetchWithAuth(`/api/workers/${worker?._id}/salary-history`)
       const data = await response.json()
       
       console.log('All salary history:', data)
@@ -185,8 +205,10 @@ const WorkerEdit = () => {
             incentives: salary.incentives.toString(),
             deductions: salary.deductions.toString(),
             withdrawals: salary.withdrawals.toString(),
+            advance: (salary.advance || 0).toString(),
             notes: salary.notes || ''
           })
+          setAdvanceAmount((salary.advance || 0).toString())
         } else {
           // No salary exists for this month - create new form
           setCurrentSalary(null)
@@ -199,8 +221,10 @@ const WorkerEdit = () => {
             incentives: '0',
             deductions: '0',
             withdrawals: '0',
+            advance: '0',
             notes: ''
           }))
+          setAdvanceAmount('0')
         }
       } else {
         // No salary exists for this month - create new form
@@ -214,8 +238,10 @@ const WorkerEdit = () => {
           incentives: '0',
           deductions: '0',
           withdrawals: '0',
+          advance: '0',
           notes: ''
         }))
+        setAdvanceAmount('0')
       }
     } catch (err) {
       console.error('خطأ في جلب بيانات الراتب:', err)
@@ -229,8 +255,10 @@ const WorkerEdit = () => {
         incentives: '0',
         deductions: '0',
         withdrawals: '0',
+        advance: '0',
         notes: ''
       }))
+      setAdvanceAmount('0')
     }
   }
 
@@ -240,7 +268,7 @@ const WorkerEdit = () => {
     setIsSubmitting(true)
     
     try {
-      const response = await fetch(`/api/workers/${id}`, {
+      const response = await fetchWithAuth(`/api/workers/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -280,12 +308,10 @@ const WorkerEdit = () => {
       const incentives = Number(salaryForm.incentives)
       const deductions = Number(salaryForm.deductions)
       const withdrawals = Number(salaryForm.withdrawals)
+      const advance = Number(salaryForm.advance || 0)
       
-      // Calculate daily salary (assuming 30 days per month)
-      const dailySalary = basicSalary / 30
-      const absenceDeduction = absenceDays * dailySalary
-      
-      const finalSalary = basicSalary - absenceDeduction + incentives - deductions - withdrawals
+      // Calculate final salary (matching backend: basicSalary + incentives - deductions - withdrawals - advance)
+      const finalSalary = basicSalary + incentives - deductions - withdrawals - advance
   console.log(finalSalary)
       const salaryData = {
         workerId: worker?._id,
@@ -293,6 +319,7 @@ const WorkerEdit = () => {
         month: salaryForm.month,
         basicSalary: basicSalary,
         absenceDays: absenceDays,
+        advance: advance,
         incentives: incentives,
         deductions: deductions,
         withdrawals: withdrawals,
@@ -302,7 +329,7 @@ const WorkerEdit = () => {
       let response
       if (currentSalary) {
         // Update existing salary
-        response = await fetch(`/api/workers/salaries/${currentSalary._id}`, {
+        response = await fetchWithAuth(`/api/workers/salaries/${currentSalary._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -311,7 +338,7 @@ const WorkerEdit = () => {
         })
       } else {
         // Create new salary
-        response = await fetch('/api/workers/salaries', {
+        response = await fetchWithAuth('/api/workers/salaries', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -326,7 +353,7 @@ const WorkerEdit = () => {
         // After creating/updating salary, mark it as paid
         if (currentSalary) {
           // Update payment status
-          await fetch(`/api/workers/salaries/${currentSalary._id}`, {
+          await fetchWithAuth(`/api/workers/salaries/${currentSalary._id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -339,7 +366,7 @@ const WorkerEdit = () => {
           })
         } else {
           // For new salary, create payment record
-          await fetch('/api/workers/salaries/pay', {
+          await fetchWithAuth('/api/workers/salaries/pay', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -376,10 +403,11 @@ const WorkerEdit = () => {
         incentives: Number(salaryForm.incentives),
         deductions: Number(salaryForm.deductions),
         withdrawals: Number(salaryForm.withdrawals),
+        advance: Number(salaryForm.advance || 0),
         notes: salaryForm.notes
       }
 
-      const response = await fetch(`/api/workers/salaries/${currentSalary?._id}/data`, {
+      const response = await fetchWithAuth(`/api/workers/salaries/${currentSalary?._id}/data`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -411,7 +439,7 @@ const WorkerEdit = () => {
 
     try {
       setIsSubmitting(true)
-      const response = await fetch('/api/workers/salaries/mark-paid', {
+      const response = await fetchWithAuth('/api/workers/salaries/mark-paid', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -419,8 +447,7 @@ const WorkerEdit = () => {
         body: JSON.stringify({
           salaryId: currentSalary._id,
           paymentMethod: 'cash',
-          notes: 'دفع من خلال النظام',
-          adminId: null
+          notes: 'دفع من خلال النظام'
         })
       })
 
@@ -448,7 +475,7 @@ const WorkerEdit = () => {
 
     try {
       setIsSubmitting(true)
-      const response = await fetch('/api/workers/salaries/mark-unpaid', {
+      const response = await fetchWithAuth('/api/workers/salaries/mark-unpaid', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -486,6 +513,88 @@ const WorkerEdit = () => {
       ...salaryForm,
       [e.target.id]: e.target.value
     })
+  }
+
+  // Add advance payment (moderator only, current month only)
+  const handleAddAdvance = async () => {
+    if (!isModerator) {
+      toast.error('غير مصرح لك بإضافة الصرفة. هذه الميزة متاحة للأدمن العادي فقط')
+      return
+    }
+
+    // Check if current month
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth() + 1
+
+    if (Number(salaryForm.year) !== currentYear || Number(salaryForm.month) !== currentMonth) {
+      toast.error('يمكن إضافة الصرفة للشهر الحالي فقط')
+      return
+    }
+
+    // Validate advance amount
+    const advance = Number(advanceAmount)
+    if (advance < 0) {
+      toast.error('قيمة الصرفة يجب أن تكون أكبر من أو تساوي صفر')
+      return
+    }
+
+    // Check if advance exceeds basic salary
+    const basicSalary = Number(salaryForm.basicSalary || worker?.basicSalary || 0)
+    if (advance > basicSalary) {
+      toast.error(`الصرفة (${advance}) لا يمكن أن تكون أكبر من الراتب الأساسي (${basicSalary})`)
+      return
+    }
+
+    if (!worker?._id) {
+      toast.error('الموظف غير موجود')
+      return
+    }
+
+    setIsAddingAdvance(true)
+    try {
+      let token
+      try {
+        const adminData = JSON.parse(localStorage.getItem('admin') || '{}')
+        if (adminData.token) {
+          token = adminData.token
+        }
+      } catch (error) {
+        console.log(error)
+      }
+
+      const response = await fetchWithAuth('/api/workers/salaries/advance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          workerId: worker._id,
+          advance: advance
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('تم إضافة الصرفة بنجاح')
+        // Refresh salary data
+        fetchSalaryHistory()
+        loadSalaryData(salaryForm.year, salaryForm.month)
+        // Update salary form
+        setSalaryForm(prev => ({
+          ...prev,
+          advance: advance.toString()
+        }))
+      } else {
+        toast.error(data.message || 'خطأ في إضافة الصرفة')
+      }
+    } catch (err) {
+      console.error('Error adding advance:', err)
+      toast.error('حدث خطأ في الاتصال بالخادم')
+    } finally {
+      setIsAddingAdvance(false)
+    }
   }
 
   const getMonthName = (month: number) => {
@@ -725,6 +834,52 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
+                
+                {/* حقل الصرفة - للأدمن moderator فقط */}
+                {isModerator && (
+                  <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                    <label htmlFor="advance" className="!block !text-sm !font-medium !text-gray-700">
+                      الصرفة (ريال) - للشهر الحالي فقط
+                    </label>
+                    <div className="!flex !gap-2">
+                      <input
+                        type="number"
+                        id="advance"
+                        min="0"
+                        max={worker?.basicSalary || salaryForm.basicSalary}
+                        value={advanceAmount}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setAdvanceAmount(value)
+                          // Validate that advance doesn't exceed basic salary
+                          const advanceNum = Number(value)
+                          const basicSalaryNum = Number(worker?.basicSalary || salaryForm.basicSalary || 0)
+                          if (advanceNum > basicSalaryNum) {
+                            toast.error(`الصرفة لا يمكن أن تكون أكبر من الراتب الأساسي (${basicSalaryNum})`)
+                            setAdvanceAmount(basicSalaryNum.toString())
+                          }
+                        }}
+                        className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddAdvance}
+                        disabled={isAddingAdvance || Number(salaryForm.year) !== new Date().getFullYear() || Number(salaryForm.month) !== new Date().getMonth() + 1}
+                        className="!px-4 !py-2 !bg-blue-600 !text-white !rounded-lg !hover:bg-blue-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300"
+                        title={Number(salaryForm.year) !== new Date().getFullYear() || Number(salaryForm.month) !== new Date().getMonth() + 1 ? 'الصرفة متاحة للشهر الحالي فقط' : 'إضافة الصرفة'}
+                      >
+                        {isAddingAdvance ? 'جاري الإضافة...' : 'إضافة'}
+                      </button>
+                    </div>
+                    {currentSalary?.advance && (
+                      <p className="!text-sm !text-gray-600 !mt-1">
+                        الصرفة الحالية: {currentSalary.advance} ريال
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="form-group !space-y-2 !md:col-span-2 w-full !lg:col-span-1 lg:min-w-[450px]">
                   <label htmlFor="notes" className="!block !text-sm !font-medium !text-gray-700">ملاحظات</label>
                   <textarea
@@ -822,6 +977,7 @@ const WorkerEdit = () => {
                       <th className="!px-4 !py-3 !text-right !font-semibold !text-gray-700 !border-b !border-gray-200">الحوافز</th>
                       <th className="!px-4 !py-3 !text-right !font-semibold !text-gray-700 !border-b !border-gray-200">الخصومات</th>
                       <th className="!px-4 !py-3 !text-right !font-semibold !text-gray-700 !border-b !border-gray-200">السحبيات</th>
+                      <th className="!px-4 !py-3 !text-right !font-semibold !text-gray-700 !border-b !border-gray-200">الصرفة</th>
                       <th className="!px-4 !py-3 !text-right !font-semibold !text-gray-700 !border-b !border-gray-200">الراتب النهائي</th>
                       <th className="!px-4 !py-3 !text-center !font-semibold !text-gray-700 !border-b !border-gray-200">الحالة</th>
                     </tr>
@@ -857,6 +1013,11 @@ const WorkerEdit = () => {
                         <td className="!px-4 !py-4 !text-gray-700">
                           <span className="!text-orange-600 !font-medium">
                             -{salary.withdrawals.toLocaleString()} ريال
+                          </span>
+                        </td>
+                        <td className="!px-4 !py-4 !text-gray-700">
+                          <span className="!text-purple-600 !font-medium">
+                            -{(salary.advance || 0).toLocaleString()} ريال
                           </span>
                         </td>
                         <td className="!px-4 !py-4 !font-bold !text-lg">

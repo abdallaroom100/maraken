@@ -13,12 +13,18 @@ interface Worker {
   updatedAt: string
 }
 
+interface WorkerAdvance {
+  advance: number
+  finalSalary: number
+}
+
 const WorkersList = () => {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const [salaryStatus, setSalaryStatus] = useState<{ [workerId: string]: boolean | null }>({})
+  const [workerAdvances, setWorkerAdvances] = useState<{ [workerId: string]: WorkerAdvance }>({})
 
   // Fetch all workers
   const fetchWorkers = async () => {
@@ -43,13 +49,14 @@ const WorkersList = () => {
     fetchWorkers()
   }, [])
 
-  // Fetch salary status for current month for all workers
+  // Fetch salary status and advances for current month for all workers
   useEffect(() => {
     const fetchSalaryStatus = async () => {
       const now = new Date()
       const year = now.getFullYear()
       const month = now.getMonth() + 1
       const statusObj: { [workerId: string]: boolean | null } = {}
+      const advancesObj: { [workerId: string]: WorkerAdvance } = {}
       await Promise.all(
         workers.map(async (worker) => {
           try {
@@ -58,15 +65,35 @@ const WorkersList = () => {
             if (data.success && Array.isArray(data.data)) {
               const salary = data.data.find((s: any) => Number(s.year) === year && Number(s.month) === month)
               statusObj[worker._id] = salary ? !!salary.isPaid : null
+              if (salary) {
+                advancesObj[worker._id] = {
+                  advance: salary.advance || 0,
+                  finalSalary: salary.finalSalary || worker.basicSalary
+                }
+              } else {
+                advancesObj[worker._id] = {
+                  advance: 0,
+                  finalSalary: worker.basicSalary
+                }
+              }
             } else {
               statusObj[worker._id] = null
+              advancesObj[worker._id] = {
+                advance: 0,
+                finalSalary: worker.basicSalary
+              }
             }
           } catch {
             statusObj[worker._id] = null
+            advancesObj[worker._id] = {
+              advance: 0,
+              finalSalary: worker.basicSalary
+            }
           }
         })
       )
       setSalaryStatus(statusObj)
+      setWorkerAdvances(advancesObj)
     }
     if (workers.length > 0) fetchSalaryStatus()
   }, [workers])
@@ -136,6 +163,8 @@ const WorkersList = () => {
                 <th>اسم الموظف</th>
                 <th>الوظيفة</th>
                 <th>الراتب الأساسي</th>
+                <th>الصرفات</th>
+                <th>الراتب النهائي</th>
                 <th>رقم الهوية</th>
                 <th>تاريخ الإضافة</th>
                 <th>حالة راتب الشهر الحالي</th>
@@ -145,52 +174,66 @@ const WorkersList = () => {
             <tbody>
               {workers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="no-data">لا يوجد موظفين</td>
+                  <td colSpan={9} className="no-data">لا يوجد موظفين</td>
                 </tr>
               ) : (
-                workers.map((worker) => (
-                  <tr key={worker._id}>
-                    <td style={{ textAlign: 'right', minWidth: 140 }} >
-                     <div className='flex'>
-                     <span className="user-avatar">👤</span>
-                     <span className="worker-name">{worker.name}</span>
-                     </div>
-                    </td>
-                    <td>
-                      <span className="worker-job">{worker.job}</span>
-                    </td>
-                    <td>
-                      <span className="salary-basic">{worker.basicSalary.toLocaleString()} ريال</span>
-                    </td>
-                    <td>
-                      <span className="identity-badge">{worker.identityNumber}</span>
-                    </td>
-                    <td>{new Date(worker.createdAt).toLocaleDateString('en-GB')}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      {salaryStatus[worker._id] === true ? (
-                        <span className="salary-badge paid"><span className="icon"></span> تم الدفع</span>
-                      ) : (
-                        <span className="salary-badge unpaid"><span className="icon"></span>  غير مدفوع</span>
-                      ) }
-                    </td>
-                    <td>
-                      <div  className="btn-group  !flex-wrap md:!flex-nowrap">
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleEdit(worker)}
-                        >
-                          تعديل
-                        </button>
-                        <button
-                          className="delete-btn"
-                          onClick={() => handleDelete(worker._id)}
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                workers.map((worker) => {
+                  const advance = workerAdvances[worker._id]?.advance || 0
+                  const finalSalary = workerAdvances[worker._id]?.finalSalary || worker.basicSalary
+                  return (
+                    <tr key={worker._id}>
+                      <td style={{ textAlign: 'right', minWidth: 140 }} >
+                       <div className='flex'>
+                       <span className="user-avatar">👤</span>
+                       <span className="worker-name">{worker.name}</span>
+                       </div>
+                      </td>
+                      <td>
+                        <span className="worker-job">{worker.job}</span>
+                      </td>
+                      <td>
+                        <span className="salary-basic">{worker.basicSalary.toLocaleString()} ريال</span>
+                      </td>
+                      <td>
+                        <span className="advance-amount" style={{ color: advance > 0 ? '#e53e3e' : '#718096', fontWeight: advance > 0 ? '600' : '400' }}>
+                          {advance.toLocaleString()} ريال
+                        </span>
+                      </td>
+                      <td>
+                        <span className="final-salary" style={{ color: '#48bb78', fontWeight: '600' }}>
+                          {finalSalary.toLocaleString()} ريال
+                        </span>
+                      </td>
+                      <td>
+                        <span className="identity-badge">{worker.identityNumber}</span>
+                      </td>
+                      <td>{new Date(worker.createdAt).toLocaleDateString('en-GB')}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        {salaryStatus[worker._id] === true ? (
+                          <span className="salary-badge paid"><span className="icon"></span> تم الدفع</span>
+                        ) : (
+                          <span className="salary-badge unpaid"><span className="icon"></span>  غير مدفوع</span>
+                        ) }
+                      </td>
+                      <td>
+                        <div  className="btn-group  !flex-wrap md:!flex-nowrap">
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleEdit(worker)}
+                          >
+                            تعديل
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(worker._id)}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

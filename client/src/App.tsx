@@ -22,6 +22,8 @@ import CreateInvoice from './pages/CreateInvoice'
 import InvoicesList from './pages/InvoicesList'
 import InvoicePreview from './pages/InvoicePreview'
 import EditInvoice from './pages/EditInvoice'
+import AddAdvance from './pages/AddAdvance'
+import AdvanceHistory from './pages/AdvanceHistory'
 
 import './App.css'
 
@@ -197,6 +199,22 @@ function App() {
           <ProtectedRoute admin={admin} loading={loading}>
             <Layout admin={admin}>
               <EditInvoice />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/add-advance" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <AddAdvance />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/advance-history" element={
+          <ProtectedRoute admin={admin} loading={loading}>
+            <Layout admin={admin}>
+              <AdvanceHistory />
             </Layout>
           </ProtectedRoute>
         } />

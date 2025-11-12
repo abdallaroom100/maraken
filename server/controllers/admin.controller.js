@@ -180,3 +180,24 @@ export const getCurrentAdmin = async (req, res) => {
         });
     }
 }
+
+export const listAdmins = async (req, res) => {
+    try {
+        const filters = {};
+        if (req.query.role) {
+            filters.role = req.query.role;
+        }
+
+        const admins = await Admin.find(filters)
+            .sort({ name: 1 })
+            .select("_id name role createdAt");
+
+        res.status(200).json({ admins });
+    } catch (error) {
+        console.error('List admins error:', error);
+        res.status(500).json({
+            message: "حدث خطأ في الخادم",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface Expense {
   _id: string;
@@ -17,13 +18,27 @@ const ExpenseEdit = () => {
   const [form, setForm] = useState({ description: '', amount: '', type: '' });
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const { admin, getToken } = useAuth();
+  const token = useMemo(() => getToken?.() ?? admin?.token ?? null, [admin, getToken]);
 
   useEffect(() => {
     const fetchExpense = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/expenses/find/${id}`);
+        if (!token) {
+          throw new Error('يجب تسجيل الدخول أولاً');
+        }
+
+        const res = await fetch(`/api/expenses/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'لم يتم العثور على المصروف');
+        }
+
         if (data.expense) {
           setExpense(data.expense);
           setForm({
@@ -34,14 +49,19 @@ const ExpenseEdit = () => {
         } else {
           setError('لم يتم العثور على المصروف');
         }
-      } catch {
-        setError('خطأ في الاتصال بالخادم');
+      } catch (err) {
+        console.error('Fetch expense error:', err);
+        setError(err instanceof Error ? err.message : 'خطأ في الاتصال بالخادم');
       } finally {
         setLoading(false);
       }
     };
+    if (!id || !token) {
+      setLoading(false);
+      return;
+    }
     fetchExpense();
-  }, [id]);
+  }, [id, token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,9 +71,16 @@ const ExpenseEdit = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      if (!token) {
+        throw new Error('يجب تسجيل الدخول أولاً');
+      }
+
       const res = await fetch(`/api/expenses/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           description: form.description,
           amount: Number(form.amount),
@@ -61,13 +88,16 @@ const ExpenseEdit = () => {
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'فشل في التعديل');
+      }
       if (data.expense) {
         navigate('/expenses-list');
       } else {
-        alert('فشل في التعديل');
+        throw new Error('فشل في التعديل');
       }
-    } catch {
-      alert('خطأ في الاتصال بالخادم');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'خطأ في الاتصال بالخادم');
     } finally {
       setSaving(false);
     }

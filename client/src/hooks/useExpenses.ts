@@ -26,12 +26,17 @@ export const useExpenses = () => {
       }
       
       const admin = JSON.parse(adminData)
-      const adminId = admin.id
+      const token = admin.token
+
+      if (!token) {
+        throw new Error('لا يوجد صلاحيات صالحة. يرجى تسجيل الدخول مرة أخرى')
+      }
       
-      const response = await fetch(`/api/expenses/${adminId}`, {
+      const response = await fetch(`/api/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount: parseFloat(expenseData.amount),

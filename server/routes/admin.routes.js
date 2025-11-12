@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { loginAdmin, signupAdmin, getCurrentAdmin } from "../controllers/admin.controller.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import { loginAdmin, signupAdmin, getCurrentAdmin, listAdmins } from "../controllers/admin.controller.js";
+import { verifyToken, requireRole } from "../middleware/auth.middleware.js";
 
 const router = Router()
 
@@ -9,6 +9,7 @@ router.post("/login", loginAdmin)
 router.post("/signup", signupAdmin)
 
 // Protected routes
+router.get("/", verifyToken, requireRole(["manager"]), listAdmins)
 router.get("/me", verifyToken, getCurrentAdmin)
 
 export default router
