@@ -553,7 +553,8 @@ const WorkerEdit = () => {
 
     setIsAddingAdvance(true)
     try {
-      let token
+      let token = ""
+      console.log(token)
       try {
         const adminData = JSON.parse(localStorage.getItem('admin') || '{}')
         if (adminData.token) {
