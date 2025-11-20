@@ -1,6 +1,10 @@
 /* Responsive Fixes - إصلاحات التصميم المتجاوب */
 
 /* إصلاح مشاكل القائمة على الموبايل */
+#sidebar {
+  overflow: auto;
+  height: 100vh;
+}
 @media (max-width: 768px) {
   /* إصلاح مشاكل القائمة */
   .sidebar {

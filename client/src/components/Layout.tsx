@@ -127,9 +127,9 @@ const Layout = ({ children, admin }: LayoutProps) => {
       />
 
       {/* الشريط الجانبي الجديد */}
-      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`} id="sidebar">
+      <div className={`sidebar  ${isSidebarOpen ? 'open' : ''}`} id="sidebar">
         {/* Header الجديد مع اللوجو */}
-        <div className="sidebar-header">
+        <div className="sidebar-header ">
           <div className="logo-container">
             <img 
               src="/img/maraken.jpg" 
