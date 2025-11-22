@@ -67,7 +67,7 @@ const Dashboard = () => {
       color: '#ef4444'
     },
     {
-      name: 'الرواتب',
+      name: 'الرواتب المتبقية',
       value: salaryStats?.summary.totalSalaries || 0,
       fill: '#f59e0b',
       color: '#f59e0b'
@@ -225,7 +225,7 @@ const Dashboard = () => {
                 <FaUsers size={28} color="#f59e0b" />
               </div>
               <div className="stat-content">
-                <h3>إجمالي الرواتب</h3>
+                <h3>إجمالي الرواتب المتبقية</h3>
                 <div className="stat-amount">{formatNumber(salaryStats?.summary.totalSalaries || 0)} ريال</div>
                 <div className="stat-count">{salaryStats?.summary.salariesCount || 0} موظف</div>
               </div>
@@ -306,7 +306,7 @@ const Dashboard = () => {
                     <FaMoneyBillWave size={24} color="#f59e0b" />
                   </div>
                   <div className="stat-content">
-                    <h4>إجمالي الرواتب</h4>
+                    <h4>إجمالي الرواتب المتبقية</h4>
                     <div className="stat-amount">{formatNumber(salaryStats.summary.totalSalaries)} ريال</div>
                   </div>
                 </div>

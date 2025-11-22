@@ -382,6 +382,50 @@ const Expenses = () => {
         throw new Error(data.message || 'خطأ في إضافة الصرفة');
       }
 
+      // Add the advance as an expense in the expenses log
+      try {
+        const expenseDescription = notes.trim() 
+          ? `صرفة لـ ${selectedWorker.name} - ${notes.trim()}`
+          : `صرفة لـ ${selectedWorker.name}`;
+        
+        // Create expense directly without showing toast (to avoid duplicate messages)
+        const expenseResponse = await fetchWithAuth('/api/expenses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: advance,
+            description: expenseDescription,
+            type: 'رواتب'
+          })
+        });
+
+        // Read response once
+        const expenseData = await expenseResponse.json();
+        
+        // Check if expense was created successfully (status 201 = Created)
+        if (expenseResponse.ok && expenseResponse.status === 201 && expenseData.expense) {
+          // Expense created successfully, no error message needed
+          // Silent success - expense is added to the log
+        } else {
+          // If expense creation fails, show warning but don't fail the advance creation
+          const errorMessage = expenseData.message || 'فشل إضافة المصروف';
+          console.error('Error creating expense for advance:', {
+            status: expenseResponse.status,
+            ok: expenseResponse.ok,
+            hasExpense: !!expenseData.expense,
+            message: errorMessage
+          });
+          toast.error('تم إضافة الصرفة لكن فشل إضافتها في سجل المصروفات');
+        }
+      } catch (expenseError) {
+        // If expense creation fails, show warning but don't fail the advance creation
+        console.error('Error creating expense for advance:', expenseError);
+        const errorMessage = expenseError instanceof Error ? expenseError.message : 'حدث خطأ في إضافة المصروف';
+        toast.error('تم إضافة الصرفة لكن فشل إضافتها في سجل المصروفات');
+      }
+
       toast.success('تم إضافة الصرفة بنجاح');
 
       const workerId = selectedWorker._id;

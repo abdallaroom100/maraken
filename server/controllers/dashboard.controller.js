@@ -2,6 +2,8 @@ import Expenses from "../models/expenses.model.js";
 import Revenues from "../models/revenues.model.js";
 import Admin from "../models/admin.model.js";
 import SalaryPayment from "../models/salaryPayment.model.js";
+import Salary from "../models/salary.model.js";
+import Worker from "../models/worker.model.js";
 import mongoose from "mongoose";
 
 // الحصول على إحصائيات شاملة
@@ -115,23 +117,26 @@ export const getDashboardStats = async (req, res) => {
         console.log('Total revenues query result:', totalRevenues);
         console.log('Revenues match query:', { ...dateQuery, ...adminQuery });
 
-        // الحصول على إجمالي الرواتب المدفوعة
+        // الحصول على إجمالي الرواتب المتبقية (غير المدفوعة)
         let salaryQuery = {};
         if (year && month) {
-            salaryQuery = { year: parseInt(year), month: parseInt(month) };
-        }
-        if (adminId && adminId !== '') {
-            salaryQuery.adminId = new mongoose.Types.ObjectId(adminId);
+            salaryQuery = { year: parseInt(year), month: parseInt(month), isPaid: false };
+        } else {
+            salaryQuery = { isPaid: false };
         }
 
-        const totalSalaries = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
-            { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
-        ]);
+        // الحصول على الموظفين النشطين فقط
+        const activeWorkers = await Worker.find({ isActive: true }).select('_id');
+        const activeWorkerIds = activeWorkers.map(w => w._id);
 
-        // الحصول على إحصائيات الرواتب حسب الموظف
-        const salariesByWorker = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
+        // حساب إجمالي الرواتب المتبقية (finalSalary للموظفين النشطين الذين لم يتم دفع رواتبهم)
+        const unpaidSalaries = await Salary.aggregate([
+            { 
+                $match: { 
+                    ...salaryQuery,
+                    workerId: { $in: activeWorkerIds }
+                }
+            },
             {
                 $lookup: {
                     from: "workers",
@@ -142,11 +147,60 @@ export const getDashboardStats = async (req, res) => {
             },
             { $unwind: "$worker" },
             {
+                $match: {
+                    "worker.isActive": true
+                }
+            },
+            { $group: { _id: null, total: { $sum: "$finalSalary" }, count: { $sum: 1 } } }
+        ]);
+
+        // حساب إجمالي الرواتب المدفوعة (للإحصائيات الأخرى)
+        let salaryPaymentQuery = {};
+        if (year && month) {
+            salaryPaymentQuery = { year: parseInt(year), month: parseInt(month) };
+        }
+        if (adminId && adminId !== '') {
+            salaryPaymentQuery.adminId = new mongoose.Types.ObjectId(adminId);
+        }
+
+        const totalSalaries = unpaidSalaries.length > 0 ? unpaidSalaries : [{ total: 0, count: 0 }];
+
+        // الحصول على إحصائيات الرواتب المتبقية حسب الموظف
+        let salariesByWorkerQuery = {};
+        if (year && month) {
+            salariesByWorkerQuery = { year: parseInt(year), month: parseInt(month), isPaid: false };
+        } else {
+            salariesByWorkerQuery = { isPaid: false };
+        }
+
+        const salariesByWorker = await Salary.aggregate([
+            { 
+                $match: { 
+                    ...salariesByWorkerQuery,
+                    workerId: { $in: activeWorkerIds }
+                }
+            },
+            {
+                $lookup: {
+                    from: "workers",
+                    localField: "workerId",
+                    foreignField: "_id",
+                    as: "worker"
+                }
+            },
+            { $unwind: "$worker" },
+            {
+                $match: {
+                    "worker.isActive": true
+                }
+            },
+            {
                 $group: {
                     _id: "$workerId",
                     workerName: { $first: "$worker.name" },
                     workerJob: { $first: "$worker.job" },
-                    totalSalary: { $sum: "$amount" },
+                    totalSalary: { $sum: "$finalSalary" },
+                    basicSalary: { $first: "$worker.basicSalary" },
                     paymentsCount: { $sum: 1 }
                 }
             },
@@ -192,8 +246,16 @@ export const getDashboardStats = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(5);
 
-        // الحصول على أحدث مدفوعات الرواتب
-        const recentSalaryPayments = await SalaryPayment.find(salaryQuery)
+        // الحصول على أحدث مدفوعات الرواتب (من SalaryPayment)
+        let recentPaymentQuery = {};
+        if (year && month) {
+            recentPaymentQuery = { year: parseInt(year), month: parseInt(month) };
+        }
+        if (adminId && adminId !== '') {
+            recentPaymentQuery.adminId = new mongoose.Types.ObjectId(adminId);
+        }
+
+        const recentSalaryPayments = await SalaryPayment.find(recentPaymentQuery)
             .populate('workerId', 'name job')
             .populate('adminId', 'name')
             .sort({ createdAt: -1 })
@@ -281,6 +343,7 @@ export const getDashboardStats = async (req, res) => {
 
         const totalExpensesAmount = totalExpenses.length > 0 ? totalExpenses[0].total : 0;
         const totalRevenuesAmount = totalRevenues.length > 0 ? totalRevenues[0].total : 0;
+        // totalSalaries هنا هو إجمالي الرواتب المتبقية (غير المدفوعة)
         const totalSalariesAmount = totalSalaries.length > 0 ? totalSalaries[0].total : 0;
         const netAmount = totalRevenuesAmount - totalExpensesAmount;
 
@@ -321,31 +384,51 @@ export const getSalaryStats = async (req, res) => {
     try {
         const { year, month, adminId } = req.query;
         
-        // بناء query للرواتب
+        // بناء query للرواتب المتبقية (غير المدفوعة)
         let salaryQuery = {};
         if (year && month) {
-            salaryQuery = { year: parseInt(year), month: parseInt(month) };
-        }
-        if (adminId && adminId !== '') {
-            try {
-                salaryQuery.adminId = new mongoose.Types.ObjectId(adminId);
-            } catch (error) {
-                return res.status(400).json({
-                    success: false,
-                    message: "معرف المدير غير صحيح"
-                });
-            }
+            salaryQuery = { year: parseInt(year), month: parseInt(month), isPaid: false };
+        } else {
+            salaryQuery = { isPaid: false };
         }
 
-        // إجمالي الرواتب المدفوعة
-        const totalSalaries = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
-            { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
+        // الحصول على الموظفين النشطين فقط
+        const activeWorkers = await Worker.find({ isActive: true }).select('_id');
+        const activeWorkerIds = activeWorkers.map(w => w._id);
+
+        // إجمالي الرواتب المتبقية (غير المدفوعة)
+        const totalSalaries = await Salary.aggregate([
+            { 
+                $match: { 
+                    ...salaryQuery,
+                    workerId: { $in: activeWorkerIds }
+                }
+            },
+            {
+                $lookup: {
+                    from: "workers",
+                    localField: "workerId",
+                    foreignField: "_id",
+                    as: "worker"
+                }
+            },
+            { $unwind: "$worker" },
+            {
+                $match: {
+                    "worker.isActive": true
+                }
+            },
+            { $group: { _id: null, total: { $sum: "$finalSalary" }, count: { $sum: 1 } } }
         ]);
 
-        // الرواتب حسب الموظف
-        const salariesByWorker = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
+        // الرواتب المتبقية حسب الموظف
+        const salariesByWorker = await Salary.aggregate([
+            { 
+                $match: { 
+                    ...salaryQuery,
+                    workerId: { $in: activeWorkerIds }
+                }
+            },
             {
                 $lookup: {
                     from: "workers",
@@ -366,17 +449,29 @@ export const getSalaryStats = async (req, res) => {
                     _id: "$workerId",
                     workerName: { $first: "$worker.name" },
                     workerJob: { $first: "$worker.job" },
-                 
-                    totalSalary: { $sum: "$amount" },
+                    totalSalary: { $sum: "$finalSalary" },
+                    basicSalary: { $first: "$worker.basicSalary" },
                     paymentsCount: { $sum: 1 }
                 }
             },
             { $sort: { totalSalary: -1 } }
         ]);
 
-        // الرواتب حسب طريقة الدفع
+        // الرواتب حسب طريقة الدفع (من SalaryPayment - المدفوعة)
+        let paymentMethodQuery = {};
+        if (year && month) {
+            paymentMethodQuery = { year: parseInt(year), month: parseInt(month) };
+        }
+        if (adminId && adminId !== '') {
+            try {
+                paymentMethodQuery.adminId = new mongoose.Types.ObjectId(adminId);
+            } catch (error) {
+                // Skip if invalid adminId
+            }
+        }
+
         const salariesByPaymentMethod = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
+            { $match: paymentMethodQuery },
             {
                 $group: {
                     _id: "$paymentMethod",
@@ -387,35 +482,16 @@ export const getSalaryStats = async (req, res) => {
             { $sort: { total: -1 } }
         ]);
 
-        // أحدث مدفوعات الرواتب
-        const recentSalaryPayments = await SalaryPayment.find(salaryQuery)
+        // أحدث مدفوعات الرواتب (من SalaryPayment)
+        const recentSalaryPayments = await SalaryPayment.find(paymentMethodQuery)
             .populate('workerId', 'name job isActive')
             .populate('adminId', 'name')
             .sort({ createdAt: -1 })
             .limit(5);
 
-        // إحصائيات الرواتب حسب المدير
-        const salariesByAdmin = await SalaryPayment.aggregate([
-            { $match: salaryQuery },
-            {
-                $lookup: {
-                    from: "floweradmins",
-                    localField: "adminId",
-                    foreignField: "_id",
-                    as: "admin"
-                }
-            },
-            { $unwind: "$admin" },
-            {
-                $group: {
-                    _id: "$adminId",
-                    adminName: { $first: "$admin.name" },
-                    totalSalaries: { $sum: "$amount" },
-                    salariesCount: { $sum: 1 }
-                }
-            },
-            { $sort: { totalSalaries: -1 } }
-        ]);
+        // إحصائيات الرواتب المتبقية حسب المدير (من Salary - غير المدفوعة)
+        // ملاحظة: Salary model لا يحتوي على adminId مباشرة، لذا نعرض فقط إجمالي الرواتب المتبقية
+        const salariesByAdmin = []; // غير متوفر حالياً من Salary model
 
         const totalSalariesAmount = totalSalaries.length > 0 ? totalSalaries[0].total : 0;
         const totalSalariesCount = totalSalaries.length > 0 ? totalSalaries[0].count : 0;
