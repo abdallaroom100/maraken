@@ -52,7 +52,7 @@ input:focus, select:focus {
 
 .add-btn {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%);
+  background: linear-gradient(98deg, #24324e 0%, #3f4b8e 100%);
   color: white;
   border: none;
   padding: 15px 30px;
@@ -68,7 +68,7 @@ input:focus, select:focus {
 }
 
 .add-btn:hover {
-  background: linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%);
+  background: linear-gradient(98deg, #24324e 0%, #3f4b8e 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 64, 128, 0.3);
 }
@@ -130,7 +130,7 @@ table {
 
 thead {
   /* background: linear-gradient(135deg, #004080 0%, #002d5e 100%); */
-  background: linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%);
+  background: linear-gradient(98deg, #24324e 0%, #3f4b8e 100%);
   color: white;
 }
 

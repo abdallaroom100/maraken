@@ -312,7 +312,7 @@
 .logo-image {
   width: 120px;
   height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
+  /* object-fit: cover; */
+  /* border-radius: 50%; */
   border: none;
 } 

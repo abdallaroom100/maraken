@@ -536,7 +536,7 @@ const Expenses = () => {
             <button 
               className='max-w-[400px] !mx-auto w-full mx-auto' 
               type="submit"
-              style={{margin:"auto",minWidth:"300px",background:"linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%)"}}
+              style={{margin:"auto",minWidth:"300px",background:"linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)"}}
               disabled={loading}
             >
               {loading ? 'جاري الإضافة...' : 'إضافة مصروف'}

@@ -131,11 +131,13 @@ const Layout = ({ children, admin }: LayoutProps) => {
         {/* Header الجديد مع اللوجو */}
         <div className="sidebar-header ">
           <div className="logo-container">
-            <img 
-              src="/img/maraken.jpg" 
+           <div className="image-wrapper bg-[#FFFFFF]">
+           <img 
+              src="/img/logo2.jpg" 
               alt="مراكن الورد" 
               className="logo-image"
             />
+           </div>
             {/* <h1>مراكن الورد</h1> */}
                          {admin && (
                <div className="admin-info">

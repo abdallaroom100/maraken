@@ -712,7 +712,7 @@ const WorkerEdit = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                style={{maxWidth: '300px', margin: 'auto',background:"linear-gradient(135deg, #a1b1a7 0%, #3a4f41 100%)"}}
+                style={{maxWidth: '300px', margin: 'auto',background:"linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)"}}
                 className="update-btn !w-full !md:w-auto !px-8 !py-3 max-w-[400px] mx-auto text-center flex justify-center  !bg-gradient-to-r !from-green-600 !to-teal-600 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-teal-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105"
               >
                 {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
