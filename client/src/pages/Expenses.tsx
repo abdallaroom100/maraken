@@ -423,6 +423,7 @@ const Expenses = () => {
         // If expense creation fails, show warning but don't fail the advance creation
         console.error('Error creating expense for advance:', expenseError);
         const errorMessage = expenseError instanceof Error ? expenseError.message : 'حدث خطأ في إضافة المصروف';
+        console.log(errorMessage);
         toast.error('تم إضافة الصرفة لكن فشل إضافتها في سجل المصروفات');
       }
 
