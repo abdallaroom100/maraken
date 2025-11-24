@@ -5,7 +5,9 @@
   overflow: auto;
   height: 100vh;
 }
+
 @media (max-width: 768px) {
+
   /* إصلاح مشاكل القائمة */
   .sidebar {
     position: fixed !important;
@@ -60,7 +62,8 @@
   .form-control {
     width: 100% !important;
     padding: 0.75rem !important;
-    font-size: 16px !important; /* لمنع التكبير التلقائي على iOS */
+    font-size: 16px !important;
+    /* لمنع التكبير التلقائي على iOS */
   }
 
   /* إصلاح الأزرار */
@@ -106,6 +109,7 @@
 }
 
 @media (max-width: 480px) {
+
   /* إصلاحات إضافية للشاشات الصغيرة */
   .sidebar {
     width: 100% !important;
@@ -164,6 +168,7 @@
 }
 
 @media (max-width: 360px) {
+
   /* إصلاحات للشاشات الصغيرة جداً */
   .mobile-menu-toggle {
     top: 0.5rem !important;

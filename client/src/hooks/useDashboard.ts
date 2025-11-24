@@ -10,6 +10,7 @@ interface DashboardStats {
     expensesCount: number;
     revenuesCount: number;
     salariesCount: number;
+    activeWorkersCount?: number;
   };
   expensesByType: Array<{
     _id: string;
@@ -33,6 +34,7 @@ interface SalaryStats {
     totalSalaries: number;
     salariesCount: number;
     averageSalary: number;
+    activeWorkersCount?: number;
   };
   salariesByWorker: Array<any>;
   salariesByPaymentMethod: Array<any>;
@@ -112,31 +114,31 @@ export const useDashboard = () => {
     try {
       const token = getToken()
       if (!token) return
-      
+
       const queryParams = new URLSearchParams()
       if (filters.year) queryParams.append('year', filters.year.toString())
       if (filters.month) queryParams.append('month', filters.month.toString())
       if (filters.adminId) queryParams.append('adminId', filters.adminId)
-      
+
       const response = await fetch(`/api/dashboard/salary-stats?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       })
-      
+
       if (response.status === 401) {
         localStorage.removeItem('adminToken')
         localStorage.removeItem('admin')
         window.location.href = '/login'
         return
       }
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Failed to fetch salary stats')
       }
-      
+
       const data = await response.json()
       setSalaryStats(data.data)
     } catch (error) {
@@ -172,12 +174,43 @@ export const useDashboard = () => {
     }
   }
 
+  // جلب عدد الموظفين النشطين
+  const fetchActiveWorkers = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+
+      const response = await fetch('/api/workers', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && Array.isArray(data.data)) {
+          setStats(prev => prev ? {
+            ...prev,
+            summary: {
+              ...prev.summary,
+              activeWorkersCount: data.data.length
+            }
+          } : null)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching active workers:', error)
+    }
+  }
+
   // عند تغيير السنة أو الشهر: جلب كل البيانات دفعة واحدة
   useEffect(() => {
     if (!authLoading && isAuthenticated && admin) {
       fetchAllData()
       fetchAdmins()
       fetchSalaryStats()
+      fetchActiveWorkers()
     }
     // eslint-disable-next-line
   }, [authLoading, isAuthenticated, admin, filters.year, filters.month])
@@ -232,7 +265,7 @@ export const useDashboard = () => {
       const found = admins.find(a => a._id === s.adminId)
       s.adminName = found ? found.name : 'المدير'
     })
-    setStats({
+    setStats(prev => ({
       summary: {
         totalExpenses,
         totalRevenues,
@@ -240,7 +273,8 @@ export const useDashboard = () => {
         netAmount,
         expensesCount: filteredExpenses.length,
         revenuesCount: filteredRevenues.length,
-        salariesCount: 0 // سيتم تحديثها من salaryStats
+        salariesCount: 0, // سيتم تحديثها من salaryStats
+        activeWorkersCount: prev?.summary.activeWorkersCount || 0 // الحفاظ على القيمة السابقة
       },
       expensesByType,
       revenuesByType,
@@ -249,7 +283,7 @@ export const useDashboard = () => {
       recentSalaryPayments: [], // سيتم تحديثها من salaryStats
       salariesByWorker: [], // سيتم تحديثها من salaryStats
       adminStats: Object.values(adminStatsMap).sort((a: any, b: any) => b.netAmount - a.netAmount)
-    })
+    }))
     setLoading(false)
   }, [allData, filters.adminId, admins])
 
@@ -276,7 +310,8 @@ export const useDashboard = () => {
     await fetchAllData();
     await fetchAdmins();
     await fetchSalaryStats();
+    await fetchActiveWorkers();
   };
 
   return { stats, salaryStats, admins, loading, error, filters, updateFilters, resetFilters, refetch }
-} 
+}

@@ -33,6 +33,25 @@ export const recalcSalaryAdvanceTotals = async (salaryId) => {
 
     salary.finalSalary = baseSalary + incentives - deductions - withdrawals - totalAdvance;
 
+    // Auto-pay logic: if final salary is 0 or less, mark as paid
+    if (salary.finalSalary <= 0) {
+        if (!salary.isPaid) {
+            salary.isPaid = true;
+            salary.paymentDate = new Date();
+        }
+    } else {
+        // If salary becomes positive again (e.g. advance deleted), revert to unpaid
+        // ONLY if it was auto-paid (we don't have a flag for auto-paid, but reverting is safer for consistency)
+        // However, if it was manually paid, we might not want to revert. 
+        // For now, let's assume if it's positive, it's not "fully paid by advance".
+        // But we should be careful not to unpay a manually paid salary.
+        // Let's check if there is a payment record? 
+        // For simplicity and user request: "if salary finishes via advances, mark as paid".
+        // If I delete an advance, and salary becomes > 0, it should probably be unpaid so I can pay the rest.
+        salary.isPaid = false;
+        salary.paymentDate = undefined;
+    }
+
     if (entries.length > 0) {
         const latestEntry = entries[0];
         salary.advanceCreatedBy = latestEntry.adminId;

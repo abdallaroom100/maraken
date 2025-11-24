@@ -23,6 +23,8 @@ const WorkersList = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [salaryStatus, setSalaryStatus] = useState<{ [workerId: string]: boolean | null }>({})
   const [workerAdvances, setWorkerAdvances] = useState<{ [workerId: string]: WorkerAdvance }>({})
 
@@ -32,7 +34,7 @@ const WorkersList = () => {
       setLoading(true)
       const response = await fetch('/api/workers')
       const data = await response.json()
-      
+
       if (data.success) {
         setWorkers(data.data)
       } else {
@@ -49,21 +51,19 @@ const WorkersList = () => {
     fetchWorkers()
   }, [])
 
-  // Fetch salary status and advances for current month for all workers
+  // Fetch salary status and advances for selected month/year for all workers
   useEffect(() => {
     const fetchSalaryStatus = async () => {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = now.getMonth() + 1
       const statusObj: { [workerId: string]: boolean | null } = {}
       const advancesObj: { [workerId: string]: WorkerAdvance } = {}
+
       await Promise.all(
         workers.map(async (worker) => {
           try {
             const res = await fetch(`/api/workers/${worker._id}/salary-history`)
             const data = await res.json()
             if (data.success && Array.isArray(data.data)) {
-              const salary = data.data.find((s: any) => Number(s.year) === year && Number(s.month) === month)
+              const salary = data.data.find((s: any) => Number(s.year) === selectedYear && Number(s.month) === selectedMonth)
               statusObj[worker._id] = salary ? !!salary.isPaid : null
               if (salary) {
                 advancesObj[worker._id] = {
@@ -96,7 +96,7 @@ const WorkersList = () => {
       setWorkerAdvances(advancesObj)
     }
     if (workers.length > 0) fetchSalaryStatus()
-  }, [workers])
+  }, [workers, selectedMonth, selectedYear])
 
   // Delete worker
   const handleDelete = async (id: string) => {
@@ -108,7 +108,7 @@ const WorkersList = () => {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         fetchWorkers()
         alert('تم حذف الموظف بنجاح')
@@ -131,10 +131,27 @@ const WorkersList = () => {
   }
 
   const totalBasicSalary = workers.reduce((sum, worker) => sum + worker.basicSalary, 0)
-   console.log(totalBasicSalary)
+  console.log(totalBasicSalary)
   if (loading) {
     return <div className="loading">جاري التحميل...</div>
   }
+
+  const months = [
+    { value: 1, label: 'يناير' },
+    { value: 2, label: 'فبراير' },
+    { value: 3, label: 'مارس' },
+    { value: 4, label: 'أبريل' },
+    { value: 5, label: 'مايو' },
+    { value: 6, label: 'يونيو' },
+    { value: 7, label: 'يوليو' },
+    { value: 8, label: 'أغسطس' },
+    { value: 9, label: 'سبتمبر' },
+    { value: 10, label: 'أكتوبر' },
+    { value: 11, label: 'نوفمبر' },
+    { value: 12, label: 'ديسمبر' },
+  ]
+
+  const years = Array.from({ length: 5 }, (_, i) => 2024 + i)
 
   return (
     <>
@@ -151,11 +168,35 @@ const WorkersList = () => {
 </div> */}
 
         <div className="table-section">
-          <div className="table-header">
+          <div className="table-header flex-wrap gap-4">
             <h2 className='!m-0'>قائمة الموظفين</h2>
-            <button className="add-worker-btn !w-fit" onClick={handleAddWorker}>
-              + إضافة موظف جديد
-            </button>
+
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="flex gap-2 items-center">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="p-2 border rounded-md"
+                >
+                  {months.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="p-2 border rounded-md"
+                >
+                  {years.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button className="add-worker-btn !w-fit" onClick={handleAddWorker}>
+                + إضافة موظف جديد
+              </button>
+            </div>
           </div>
           <table>
             <thead>
@@ -167,7 +208,7 @@ const WorkersList = () => {
                 <th>الراتب النهائي</th>
                 <th>رقم الهوية</th>
                 <th>تاريخ الإضافة</th>
-                <th>حالة راتب الشهر الحالي</th>
+                <th>حالة الراتب ({months.find(m => m.value === selectedMonth)?.label} {selectedYear})</th>
                 <th>الإجراءات</th>
               </tr>
             </thead>
@@ -183,10 +224,10 @@ const WorkersList = () => {
                   return (
                     <tr key={worker._id}>
                       <td style={{ textAlign: 'right', minWidth: 140 }} >
-                       <div className='flex'>
-                       <span className="user-avatar">👤</span>
-                       <span className="worker-name">{worker.name}</span>
-                       </div>
+                        <div className='flex'>
+                          <span className="user-avatar">👤</span>
+                          <span className="worker-name">{worker.name}</span>
+                        </div>
                       </td>
                       <td>
                         <span className="worker-job">{worker.job}</span>
@@ -213,10 +254,10 @@ const WorkersList = () => {
                           <span className="salary-badge paid"><span className="icon"></span> تم الدفع</span>
                         ) : (
                           <span className="salary-badge unpaid"><span className="icon"></span>  غير مدفوع</span>
-                        ) }
+                        )}
                       </td>
                       <td>
-                        <div  className="btn-group  !flex-wrap md:!flex-nowrap">
+                        <div className="btn-group  !flex-wrap md:!flex-nowrap">
                           <button
                             className="edit-btn"
                             onClick={() => handleEdit(worker)}
@@ -243,4 +284,4 @@ const WorkersList = () => {
   )
 }
 
-export default WorkersList 
+export default WorkersList

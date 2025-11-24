@@ -1,11 +1,11 @@
 import { useDashboard } from '../hooks/useDashboard'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell
 } from 'recharts'
@@ -120,9 +120,9 @@ const Dashboard = () => {
         <div className="filters-grid" >
           <div className="filter-group " >
             <label>السنة:</label>
-            <select 
-            dir='ltr'
-              value={filters.year} 
+            <select
+              dir='ltr'
+              value={filters.year}
               onChange={(e) => updateFilters({ year: parseInt(e.target.value) })}
             >
               {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
@@ -130,12 +130,12 @@ const Dashboard = () => {
               ))}
             </select>
           </div>
-          
+
           <div className="filter-group">
             <label>الشهر:</label>
-            <select 
-              value={filters.month} 
-               dir='ltr'
+            <select
+              value={filters.month}
+              dir='ltr'
               onChange={(e) => updateFilters({ month: parseInt(e.target.value) })}
             >
               {[
@@ -156,11 +156,11 @@ const Dashboard = () => {
               ))}
             </select>
           </div>
-          
+
           <div className="filter-group ">
             <label>الأدمن:</label>
-            <select 
-              value={filters.adminId} 
+            <select
+              value={filters.adminId}
               dir='ltr'
               onChange={(e) => {
                 console.log('Selected adminId:', e.target.value)
@@ -176,7 +176,7 @@ const Dashboard = () => {
               })}
             </select>
           </div>
-          
+
           <div className="filter-group">
             <button onClick={resetFilters} className="reset-btn">
               إعادة تعيين
@@ -191,7 +191,7 @@ const Dashboard = () => {
         {filters.adminId && (
           <p>الأدمن: {admins.find((admin: any) => admin._id === filters.adminId)?.name}</p>
         )}
-       
+
       </div>
 
       {/* ملخص الأداء المالي */}
@@ -227,7 +227,7 @@ const Dashboard = () => {
               <div className="stat-content">
                 <h3>إجمالي الرواتب المتبقية</h3>
                 <div className="stat-amount">{formatNumber(salaryStats?.summary.totalSalaries || 0)} ريال</div>
-                <div className="stat-count">{salaryStats?.summary.salariesCount || 0} موظف</div>
+                <div className="stat-count">{stats?.summary.activeWorkersCount || salaryStats?.summary.salariesCount || 0} موظف</div>
               </div>
             </div>
 
@@ -237,8 +237,8 @@ const Dashboard = () => {
               </div>
               <div className="stat-content">
                 <h3>صافي الربح</h3>
-                <div 
-                  className="stat-amount" 
+                <div
+                  className="stat-amount"
                   style={{ color: getColorByValue(stats.summary.netAmount) }}
                 >
                   {formatNumber(stats.summary.netAmount)} ريال
@@ -254,25 +254,25 @@ const Dashboard = () => {
           <div className="chart-section">
             <h3>ملخص الأداء المالي - {getMonthName(filters.month)} {filters.year}</h3>
             <div className="chart-container max-w-[900px] !mx-auto">
-              <ResponsiveContainer width="100%"   height={400}>
+              <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={mainChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="name" 
+                  <XAxis
+                    dataKey="name"
                     tick={{ fontFamily: 'Tajawal', fontSize: 14, fontWeight: 'bold', fill: '#374151' }}
                     axisLine={{ stroke: '#d1d5db' }}
                     tickLine={{ stroke: '#d1d5db' }}
                   />
-                  <YAxis 
+                  <YAxis
                     tick={{ fontFamily: 'Tajawal', fontSize: 12, fill: '#6b7280' }}
                     tickFormatter={(value) => formatNumber(value)}
                     axisLine={{ stroke: '#d1d5db' }}
                     tickLine={{ stroke: '#d1d5db' }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: any) => [formatNumber(value) + ' ريال', 'المبلغ']}
                     labelStyle={{ fontFamily: 'Tajawal', fontWeight: 'bold', color: '#1f2937' }}
-                    contentStyle={{ 
+                    contentStyle={{
                       fontFamily: 'Tajawal',
                       backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       border: '1px solid #e5e7eb',
@@ -281,9 +281,9 @@ const Dashboard = () => {
                     }}
                     cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                   />
-                  
-                  <Bar 
-                    dataKey="value" 
+
+                  <Bar
+                    dataKey="value"
                     radius={[6, 6, 0, 0]}
                   >
                     {mainChartData.map((entry, index) => (
@@ -299,7 +299,7 @@ const Dashboard = () => {
           {salaryStats && (
             <div className="salary-stats-section">
               <h3>إحصائيات الرواتب - {getMonthName(filters.month)} {filters.year}</h3>
-              
+
               <div className="salary-summary-grid">
                 <div className="salary-stat-card">
                   <div className="stat-icon">
@@ -317,7 +317,7 @@ const Dashboard = () => {
                   </div>
                   <div className="stat-content">
                     <h4>عدد الموظفين</h4>
-                    <div className="stat-amount">{salaryStats.summary.salariesCount} موظف</div>
+                    <div className="stat-amount">{stats?.summary.activeWorkersCount || salaryStats.summary.salariesCount} موظف</div>
                   </div>
                 </div>
 
@@ -354,26 +354,26 @@ const Dashboard = () => {
               )} */}
 
               {/* أحدث مدفوعات الرواتب */}
-              {salaryStats.recentSalaryPayments  && salaryStats.recentSalaryPayments.length > 0 && (
+              {salaryStats.recentSalaryPayments && salaryStats.recentSalaryPayments.length > 0 && (
                 <div className="recent-salary-payments">
                   <h4>أحدث مدفوعات الرواتب</h4>
                   <div className="salary-payments-list">
                     {salaryStats.recentSalaryPayments.map((payment: any) => (
                       payment.workerId.isActive && (
-                      <div key={payment._id} className="salary-payment-item">
-                        <div className="payment-info">
-                          <div className="worker-name">{payment.workerId?.name}</div>
-                          <div className="worker-job">{payment.workerId?.job}</div>
-                          <div className="payment-date">{formatDate(payment.createdAt)}</div>
+                        <div key={payment._id} className="salary-payment-item">
+                          <div className="payment-info">
+                            <div className="worker-name">{payment.workerId?.name}</div>
+                            <div className="worker-job">{payment.workerId?.job}</div>
+                            <div className="payment-date">{formatDate(payment.createdAt)}</div>
+                          </div>
+                          <div className="payment-amount">
+                            {formatNumber(payment.amount)} ريال
+                          </div>
+                          <div className="payment-method">
+                            {payment.paymentMethod === 'cash' ? 'نقداً' :
+                              payment.paymentMethod === 'bank' ? 'بنك' : 'شيك'}
+                          </div>
                         </div>
-                        <div className="payment-amount">
-                          {formatNumber(payment.amount)} ريال
-                        </div>
-                        <div className="payment-method">
-                          {payment.paymentMethod === 'cash' ? 'نقداً' : 
-                           payment.paymentMethod === 'bank' ? 'بنك' : 'شيك'}
-                        </div>
-                      </div>
                       )
                     ))}
                   </div>

@@ -10,7 +10,7 @@ import mongoose from "mongoose";
 export const getDashboardStats = async (req, res) => {
     try {
         const { year, month, adminId, allData } = req.query;
-        
+
         console.log('Received query params:', { year, month, adminId });
         console.log('AdminId type:', typeof adminId);
         console.log('AdminId value:', adminId);
@@ -20,7 +20,7 @@ export const getDashboardStats = async (req, res) => {
         if (year && month) {
             const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
             const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
-            
+
             dateQuery = {
                 createdAt: {
                     $gte: startDate,
@@ -131,8 +131,8 @@ export const getDashboardStats = async (req, res) => {
 
         // حساب إجمالي الرواتب المتبقية (finalSalary للموظفين النشطين الذين لم يتم دفع رواتبهم)
         const unpaidSalaries = await Salary.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     ...salaryQuery,
                     workerId: { $in: activeWorkerIds }
                 }
@@ -174,8 +174,8 @@ export const getDashboardStats = async (req, res) => {
         }
 
         const salariesByWorker = await Salary.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     ...salariesByWorkerQuery,
                     workerId: { $in: activeWorkerIds }
                 }
@@ -357,7 +357,8 @@ export const getDashboardStats = async (req, res) => {
                     netAmount: netAmount,
                     expensesCount: await Expenses.countDocuments({ ...dateQuery, ...adminQuery }),
                     revenuesCount: await Revenues.countDocuments({ ...dateQuery, ...adminQuery }),
-                    salariesCount: totalSalaries.length > 0 ? totalSalaries[0].count : 0
+                    salariesCount: totalSalaries.length > 0 ? totalSalaries[0].count : 0,
+                    activeWorkersCount: activeWorkers.length
                 },
                 expensesByType,
                 revenuesByType,
@@ -383,7 +384,7 @@ export const getDashboardStats = async (req, res) => {
 export const getSalaryStats = async (req, res) => {
     try {
         const { year, month, adminId } = req.query;
-        
+
         // بناء query للرواتب المتبقية (غير المدفوعة)
         let salaryQuery = {};
         if (year && month) {
@@ -398,8 +399,8 @@ export const getSalaryStats = async (req, res) => {
 
         // إجمالي الرواتب المتبقية (غير المدفوعة)
         const totalSalaries = await Salary.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     ...salaryQuery,
                     workerId: { $in: activeWorkerIds }
                 }
@@ -423,8 +424,8 @@ export const getSalaryStats = async (req, res) => {
 
         // الرواتب المتبقية حسب الموظف
         const salariesByWorker = await Salary.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     ...salaryQuery,
                     workerId: { $in: activeWorkerIds }
                 }
@@ -435,7 +436,7 @@ export const getSalaryStats = async (req, res) => {
                     localField: "workerId",
                     foreignField: "_id",
                     as: "worker",
-                    
+
                 }
             },
             { $unwind: "$worker" },
@@ -525,7 +526,7 @@ export const getSalaryStats = async (req, res) => {
 export const getAdminsList = async (req, res) => {
     try {
         const admins = await Admin.find({}, 'name email role');
-        
+
         res.status(200).json({
             success: true,
             data: admins
@@ -547,7 +548,7 @@ export const debugData = async (req, res) => {
         const expenses = await Expenses.find({}).limit(10);
         const revenues = await Revenues.find({}).limit(10);
         const admins = await Admin.find({});
-        
+
         res.status(200).json({
             success: true,
             data: {
