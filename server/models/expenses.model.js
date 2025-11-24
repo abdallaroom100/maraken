@@ -1,4 +1,4 @@
-import mongoose , {Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const expensesSchema = new Schema({
     amount: {
@@ -9,13 +9,13 @@ const expensesSchema = new Schema({
         type: String,
         required: true,
         enum: [
-          'general', 'salary', 'other',
-          'مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'رواتب', 'أخرى', 'عامة'
+            'general', 'salary', 'other',
+            'مياه', 'كهرباء', 'إيجار', 'صيانة', 'مشتريات', 'رواتب', 'أخرى', 'عامة'
         ]
     },
-    adminId:{
+    adminId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"FlowerAdmin",
+        ref: "FlowerAdmin",
         required: true,
     },
     adminName: {
@@ -29,6 +29,10 @@ const expensesSchema = new Schema({
     salaryPaymentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "SalaryPayment"
+    },
+    advanceId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SalaryAdvance"
     },
     workerId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -48,7 +52,7 @@ const expensesSchema = new Schema({
         min: 1,
         max: 12,
     }
-},{
+}, {
     timestamps: true,
 })
 

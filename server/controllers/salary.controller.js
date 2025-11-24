@@ -15,7 +15,7 @@ const resolveAdminContext = (req, fallbackAdminId) => {
     };
 };
 
-const recalcSalaryAdvanceTotals = async (salaryId) => {
+export const recalcSalaryAdvanceTotals = async (salaryId) => {
     const salary = await Salary.findById(salaryId);
     if (!salary) {
         return null;
@@ -126,16 +126,16 @@ const parseInteger = (value, { min, max } = {}) => {
 // Create or update salary record for a worker
 export const createOrUpdateSalary = async (req, res) => {
     try {
-        const { 
-            workerId, 
-            year, 
-            month, 
-            basicSalary, 
-            absenceDays, 
-            incentives, 
-            deductions, 
+        const {
+            workerId,
+            year,
+            month,
+            basicSalary,
+            absenceDays,
+            incentives,
+            deductions,
             withdrawals,
-            notes 
+            notes
         } = req.body;
 
         // Validate worker exists
@@ -201,13 +201,13 @@ export const createOrUpdateSalary = async (req, res) => {
 export const updateSalary = async (req, res) => {
     try {
         const { id } = req.params;
-        const { 
-            basicSalary, 
-            absenceDays, 
-            incentives, 
-            deductions, 
+        const {
+            basicSalary,
+            absenceDays,
+            incentives,
+            deductions,
             withdrawals,
-            notes 
+            notes
         } = req.body;
 
         const salary = await Salary.findById(id).populate('workerId');
@@ -252,13 +252,13 @@ export const updateSalary = async (req, res) => {
 export const updateSalaryData = async (req, res) => {
     try {
         const { id } = req.params;
-        const { 
-            basicSalary, 
-            absenceDays, 
-            incentives, 
-            deductions, 
+        const {
+            basicSalary,
+            absenceDays,
+            incentives,
+            deductions,
             withdrawals,
-            notes 
+            notes
         } = req.body;
 
         const salary = await Salary.findById(id).populate('workerId');
@@ -409,6 +409,25 @@ export const addAdvance = async (req, res) => {
             adminName: adminContext?.name || req.admin?.name || 'غير محدد',
         });
 
+        // Create corresponding expense
+        const expense = await Expenses.create({
+            amount: advanceAmount,
+            type: 'salary',
+            description: `صرفة راتب: ${worker.name} - ${notes?.trim() || 'بدون ملاحظات'}`,
+            adminId: advanceEntry.adminId,
+            adminName: advanceEntry.adminName,
+            workerId: worker._id,
+            workerName: worker.name,
+            workerJob: worker.job,
+            year: currentYear,
+            month: currentMonth,
+            advanceId: advanceEntry._id
+        });
+
+        // Link expense to advance
+        advanceEntry.expenseId = expense._id;
+        await advanceEntry.save();
+
         const recalculated = await recalcSalaryAdvanceTotals(salary._id);
 
         res.status(200).json({
@@ -429,6 +448,7 @@ export const addAdvance = async (req, res) => {
                     adminName: advanceEntry.adminName,
                     createdAt: advanceEntry.createdAt,
                     updatedAt: advanceEntry.updatedAt,
+                    expenseId: expense._id
                 },
                 salary: recalculated?.salary,
             }
@@ -685,6 +705,11 @@ export const deleteAdvance = async (req, res) => {
             });
         }
 
+        // Delete linked expense if exists
+        if (advanceEntry.expenseId) {
+            await Expenses.findByIdAndDelete(advanceEntry.expenseId);
+        }
+
         await advanceEntry.deleteOne();
 
         const recalculated = await recalcSalaryAdvanceTotals(salary._id);
@@ -851,11 +876,11 @@ export const markSalaryAsUnpaid = async (req, res) => {
 // Pay salary (mark as paid and create payment record)
 export const paySalary = async (req, res) => {
     try {
-        const { 
-            salaryId, 
-            paymentMethod = 'cash', 
+        const {
+            salaryId,
+            paymentMethod = 'cash',
             notes,
-            adminId 
+            adminId
         } = req.body;
 
         const adminContext = resolveAdminContext(req, adminId);
@@ -1074,12 +1099,12 @@ export const resetSalaryPaymentStatus = async (req, res) => {
 export const getSalariesByMonth = async (req, res) => {
     try {
         const { year, month, workerId } = req.query;
-        
+
         let query = { year: Number(year), month: Number(month) };
         if (workerId) {
             query.workerId = workerId;
         }
-        
+
         const salaries = await Salary.find(query)
             .populate('workerId', 'name job identityNumber')
             .sort({ 'workerId.name': 1 });
@@ -1101,7 +1126,7 @@ export const getSalariesByMonth = async (req, res) => {
 export const getSalaryById = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const salary = await Salary.findById(id)
             .populate('workerId', 'name job identityNumber');
 
@@ -1129,7 +1154,7 @@ export const getSalaryById = async (req, res) => {
 export const getSalaryPayments = async (req, res) => {
     try {
         const { year, month, workerId } = req.query;
-        
+
         let query = {};
         if (year) query.year = Number(year);
         if (month) query.month = Number(month);
@@ -1286,13 +1311,13 @@ export const checkAndFixSalaryPaymentStatus = async (req, res) => {
 export const getSalaryStats = async (req, res) => {
     try {
         const { year, month } = req.query;
-        
+
         let query = {};
         if (year) query.year = Number(year);
         if (month) query.month = Number(month);
 
         const salaries = await Salary.find(query);
-        
+
         const stats = {
             totalWorkers: salaries.length,
             totalBasicSalary: salaries.reduce((sum, s) => sum + s.basicSalary, 0),

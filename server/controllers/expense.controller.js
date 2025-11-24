@@ -1,4 +1,6 @@
 import Expenses from "../models/expenses.model.js";
+import { SalaryAdvance, Salary } from "../models/index.js";
+import { recalcSalaryAdvanceTotals } from "./salary.controller.js";
 
 const parseInteger = (value) => {
     if (value === undefined || value === null || value === "") return undefined;
@@ -201,6 +203,26 @@ export const deleteExpense = async (req, res) => {
             expense.adminId.toString() !== req.admin._id.toString()
         ) {
             return res.status(403).json({ message: "Not authorized to delete this expense" });
+        }
+
+        // Handle linked advance deletion
+        if (expense.advanceId) {
+            const advance = await SalaryAdvance.findById(expense.advanceId);
+            if (advance) {
+                // Check if it's current month (same restriction as deleteAdvance)
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
+                const currentMonth = currentDate.getMonth() + 1;
+
+                if (advance.year !== currentYear || advance.month !== currentMonth) {
+                    return res.status(400).json({
+                        message: "Cannot delete expense linked to a past month's salary advance"
+                    });
+                }
+
+                await advance.deleteOne();
+                await recalcSalaryAdvanceTotals(advance.salaryId);
+            }
         }
 
         await expense.deleteOne();

@@ -80,10 +80,10 @@ const Expenses = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!isSalaryCategory) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-          searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     };
@@ -97,7 +97,7 @@ const Expenses = () => {
   // Search workers when search query changes
   useEffect(() => {
     if (!isSalaryCategory) return;
-    
+
     const trimmedQuery = searchQuery.trim();
 
     if (!token) {
@@ -313,15 +313,15 @@ const Expenses = () => {
   // Handle form submission for regular expenses
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (isSalaryCategory) {
       // Handle salary advance submission
       handleAdvanceSubmit(e);
       return;
     }
-    
+
     const result = await createExpense(formData)
-    
+
     if (result.success) {
       // مسح البيانات من الفورم بعد النجاح
       setFormData({
@@ -377,60 +377,6 @@ const Expenses = () => {
       });
 
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'خطأ في إضافة الصرفة');
-      }
-
-      // Add the advance as an expense in the expenses log
-      try {
-        const expenseDescription = notes.trim() 
-          ? `صرفة لـ ${selectedWorker.name} - ${notes.trim()}`
-          : `صرفة لـ ${selectedWorker.name}`;
-        
-        // Create expense directly without showing toast (to avoid duplicate messages)
-        const expenseResponse = await fetchWithAuth('/api/expenses', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: advance,
-            description: expenseDescription,
-            type: 'رواتب'
-          })
-        });
-
-        // Read response once
-        const expenseData = await expenseResponse.json();
-        
-        // Check if expense was created successfully (status 201 = Created)
-        if (expenseResponse.ok && expenseResponse.status === 201 && expenseData.expense) {
-          // Expense created successfully, no error message needed
-          // Silent success - expense is added to the log
-        } else {
-          // If expense creation fails, show warning but don't fail the advance creation
-          const errorMessage = expenseData.message || 'فشل إضافة المصروف';
-          console.error('Error creating expense for advance:', {
-            status: expenseResponse.status,
-            ok: expenseResponse.ok,
-            hasExpense: !!expenseData.expense,
-            message: errorMessage
-          });
-          toast.error('تم إضافة الصرفة لكن فشل إضافتها في سجل المصروفات');
-        }
-      } catch (expenseError) {
-        // If expense creation fails, show warning but don't fail the advance creation
-        console.error('Error creating expense for advance:', expenseError);
-        const errorMessage = expenseError instanceof Error ? expenseError.message : 'حدث خطأ في إضافة المصروف';
-        console.log(errorMessage);
-        toast.error('تم إضافة الصرفة لكن فشل إضافتها في سجل المصروفات');
-      }
-
-      toast.success('تم إضافة الصرفة بنجاح');
-
-      const workerId = selectedWorker._id;
-
       // Reset form
       setSelectedWorker(null);
       setSearchQuery('');
@@ -479,7 +425,7 @@ const Expenses = () => {
     <>
       <h1>إدارة المصروفات</h1>
 
-      <div className="container expenses pb-0" style={{paddingBottom:0}}>
+      <div className="container expenses pb-0" style={{ paddingBottom: 0 }}>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
@@ -495,7 +441,7 @@ const Expenses = () => {
                 disabled={isSalaryCategory}
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="amount">المبلغ (ريال)</label>
               <input
@@ -511,7 +457,7 @@ const Expenses = () => {
                 disabled={isSalaryCategory}
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="category">الفئة</label>
               <select
@@ -534,10 +480,10 @@ const Expenses = () => {
           </div>
 
           {!isSalaryCategory && (
-            <button 
-              className='max-w-[400px] !mx-auto w-full mx-auto' 
+            <button
+              className='max-w-[400px] !mx-auto w-full mx-auto'
               type="submit"
-              style={{margin:"auto",minWidth:"300px",background:"linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)"}}
+              style={{ margin: "auto", minWidth: "300px", background: "linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)" }}
               disabled={loading}
             >
               {loading ? 'جاري الإضافة...' : 'إضافة مصروف'}
@@ -568,305 +514,305 @@ const Expenses = () => {
 
               <div className="add-advance-form-container">
                 <form onSubmit={handleAdvanceSubmit} className="add-advance-form">
-            {/* Worker Search */}
-            <div className="form-group">
-              <label htmlFor="workerSearch" className="form-label">
-                اسم الموظف <span className="required">*</span>
-              </label>
-              <div className="search-container" ref={dropdownRef}>
-                <input
-                  type="text"
-                  id="workerSearch"
-                  ref={searchInputRef}
-                  className="form-input"
-                  placeholder="ابحث عن الموظف بالاسم..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSelectedWorker(null);
-                  }}
-                  onFocus={() => {
-                    if (workers.length > 0) {
-                      setShowDropdown(true);
-                    }
-                  }}
-                  required
-                />
-                
-                
-                {/* Dropdown */}
-                {showDropdown && workers.length > 0 && (
-                  <div className="workers-dropdown">
-                    {selectedWorker && (
-                  <button
-                    type="button"
-                    onClick={handleClearSelection}
-                    className="clear-button"
-                    title="مسح الاختيار"
-                  >
-                    ✕
-                  </button>
-                )}
-                    {isSearching ? (
-                      <div className="dropdown-loading">جاري البحث...</div>
-                    ) : (
-                      workers.map((worker) => (
-                        <div
-                          key={worker._id}
-                          className="dropdown-item"
-                          onClick={() => handleSelectWorker(worker)}
-                        >
-                          <div className="worker-name">{worker.name}</div>
-                          <div className="worker-info">
-                            <span className="worker-job">{worker.job}</span>
-                            <span className="worker-salary">الراتب: {worker.basicSalary} ريال</span>
-                          </div>
+                  {/* Worker Search */}
+                  <div className="form-group">
+                    <label htmlFor="workerSearch" className="form-label">
+                      اسم الموظف <span className="required">*</span>
+                    </label>
+                    <div className="search-container" ref={dropdownRef}>
+                      <input
+                        type="text"
+                        id="workerSearch"
+                        ref={searchInputRef}
+                        className="form-input"
+                        placeholder="ابحث عن الموظف بالاسم..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setSelectedWorker(null);
+                        }}
+                        onFocus={() => {
+                          if (workers.length > 0) {
+                            setShowDropdown(true);
+                          }
+                        }}
+                        required
+                      />
+
+
+                      {/* Dropdown */}
+                      {showDropdown && workers.length > 0 && (
+                        <div className="workers-dropdown">
+                          {selectedWorker && (
+                            <button
+                              type="button"
+                              onClick={handleClearSelection}
+                              className="clear-button"
+                              title="مسح الاختيار"
+                            >
+                              ✕
+                            </button>
+                          )}
+                          {isSearching ? (
+                            <div className="dropdown-loading">جاري البحث...</div>
+                          ) : (
+                            workers.map((worker) => (
+                              <div
+                                key={worker._id}
+                                className="dropdown-item"
+                                onClick={() => handleSelectWorker(worker)}
+                              >
+                                <div className="worker-name">{worker.name}</div>
+                                <div className="worker-info">
+                                  <span className="worker-job">{worker.job}</span>
+                                  <span className="worker-salary">الراتب: {worker.basicSalary} ريال</span>
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      ))
+                      )}
+                    </div>
+
+                    {selectedWorker && (
+                      <div className="selected-worker-info">
+                        <div className="info-item">
+                          <span className="info-label">الاسم:</span>
+                          <span className="info-value">{selectedWorker.name}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-label">الوظيفة:</span>
+                          <span className="info-value">{selectedWorker.job}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-label">الراتب الأساسي:</span>
+                          <span className="info-value">{selectedWorker.basicSalary} ريال</span>
+                        </div>
+                        <div className="selected-worker-actions">
+                          <button
+                            type="button"
+                            className="history-button"
+                            onClick={openHistoryModal}
+                          >
+                            عرض سجل الصرفات لهذا الشهر
+                          </button>
+                          <button
+                            type="button"
+                            className="clear-selection-button"
+                            onClick={handleClearSelection}
+                          >
+                            مسح الاختيار
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-              
-              {selectedWorker && (
-                <div className="selected-worker-info">
-                  <div className="info-item">
-                    <span className="info-label">الاسم:</span>
-                    <span className="info-value">{selectedWorker.name}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">الوظيفة:</span>
-                    <span className="info-value">{selectedWorker.job}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">الراتب الأساسي:</span>
-                    <span className="info-value">{selectedWorker.basicSalary} ريال</span>
-                  </div>
-                  <div className="selected-worker-actions">
-                    <button
-                      type="button"
-                      className="history-button"
-                      onClick={openHistoryModal}
-                    >
-                      عرض سجل الصرفات لهذا الشهر
-                    </button>
-                    <button
-                      type="button"
-                      className="clear-selection-button"
-                      onClick={handleClearSelection}
-                    >
-                      مسح الاختيار
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            {/* Advance Amount */}
-            <div className="form-group">
-              <label htmlFor="advanceAmount" className="form-label">
-                قيمة الصرفة (ريال) <span className="required">*</span>
-              </label>
-              <input
-                type="number"
-                id="advanceAmount"
-                className="form-input"
-                placeholder="0"
-                min="0"
-                max={selectedWorker?.basicSalary || ''}
-                step="0.01"
-                value={advanceAmount}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setAdvanceAmount(value);
-                  // Validate that advance doesn't exceed basic salary
-                  if (selectedWorker) {
-                    const advanceNum = Number(value);
-                    if (advanceNum > selectedWorker.basicSalary) {
-                      toast.error(`الصرفة لا يمكن أن تكون أكبر من الراتب الأساسي (${selectedWorker.basicSalary})`);
-                    }
-                  }
-                }}
-                required
-              />
-              {selectedWorker && (
-                <div className="form-hint">
-                  الحد الأقصى: {selectedWorker.basicSalary} ريال
-                </div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div className="form-group">
-              <label htmlFor="notes" className="form-label">
-                الوصف أو الملاحظات
-              </label>
-              <textarea
-                id="notes"
-                className="form-textarea"
-                rows={4}
-                placeholder="أضف وصف أو ملاحظات حول الصرفة (اختياري)..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <div className="form-actions">
-              <button
-                type="submit"
-                className="submit-button"
-                disabled={isSubmitting || !selectedWorker || !advanceAmount}
-              >
-                {isSubmitting ? 'جاري الإضافة...' : 'إضافة الصرفة'}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {showHistoryModal && selectedWorker && (
-          <div className="advance-history-overlay">
-            <div className="advance-history-modal">
-              <div className="advance-history-modal__header">
-                <h2>سجل صرفات {selectedWorker.name} لشهر {formatMonthLabel(currentMonthNumber, currentYearNumber)} {currentYearNumber}</h2>
-                <button type="button" className="modal-close-button" onClick={closeHistoryModal}>
-                  ✕
-                </button>
-              </div>
-              <div className="advance-history-modal__body">
-                {historyLoading ? (
-                  <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>جاري التحميل...</p>
-                  </div>
-                ) : historyError ? (
-                  <div className="error-message">{historyError}</div>
-                ) : workerAdvances.length === 0 ? (
-                  <div className="no-advances modal-empty-state">
-                    <div className="no-advances-icon">💰</div>
-                    <h3>لا توجد صرفات</h3>
-                    <p>لم يتم إضافة أي صرفات لهذا الموظف خلال الشهر الحالي</p>
-                  </div>
-                ) : (
-                  <div className="modal-table-wrapper">
-                    <table className="modal-advance-table">
-                      <thead>
-                        <tr>
-                          <th>المبلغ</th>
-                          <th>إجمالي الشهر</th>
-                          <th>الراتب الأساسي</th>
-                          <th>الراتب النهائي</th>
-                          <th>الوصف/الملاحظات</th>
-                          <th>تاريخ الإضافة</th>
-                          <th>آخر تحديث</th>
-                          <th>المشرف</th>
-                          <th>الإجراءات</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {workerAdvances.map(entry => {
-                          const isEditing = historyEditingId === entry._id;
-                          const totalLabel = entry.totalAdvance !== null && entry.totalAdvance !== undefined
-                            ? `${entry.totalAdvance.toLocaleString()} ريال`
-                            : '--';
-                          const basicLabel = entry.basicSalary !== null && entry.basicSalary !== undefined
-                            ? `${entry.basicSalary.toLocaleString()} ريال`
-                            : '--';
-                          const finalLabel = entry.finalSalary !== null && entry.finalSalary !== undefined
-                            ? `${entry.finalSalary.toLocaleString()} ريال`
-                            : '--';
-                          const adminName = entry.adminName || 'غير محدد';
-
-                          if (isEditing) {
-                            const currentTotal = entry.totalAdvance ?? 0;
-                            const previewTotal = currentTotal - entry.amount + Number(historyEditForm.amount || 0);
-
-                            return (
-                              <tr key={entry._id}>
-                                <td>
-                                  <input
-                                    type="number"
-                                    className="edit-input"
-                                    min="0"
-                                    max={entry.basicSalary ?? undefined}
-                                    value={historyEditForm.amount}
-                                    onChange={e => setHistoryEditForm({ ...historyEditForm, amount: e.target.value })}
-                                  />
-                                </td>
-                                <td>
-                                  {entry.totalAdvance !== null && entry.totalAdvance !== undefined
-                                    ? `${previewTotal.toLocaleString()} ريال`
-                                    : '--'}
-                                </td>
-                                <td>{basicLabel}</td>
-                                <td>{finalLabel}</td>
-                                <td>
-                                  <textarea
-                                    className="edit-textarea"
-                                    rows={2}
-                                    value={historyEditForm.notes}
-                                    onChange={e => setHistoryEditForm({ ...historyEditForm, notes: e.target.value })}
-                                    placeholder="الوصف أو الملاحظات..."
-                                  />
-                                </td>
-                                <td>{formatDateTime(entry.createdAt)}</td>
-                                <td>{formatDateTime(entry.updatedAt || entry.createdAt)}</td>
-                                <td>{adminName}</td>
-                                <td>
-                                  <div className="edit-actions">
-                                    <button className="save-btn" onClick={() => handleHistoryUpdate(entry._id)}>
-                                      حفظ
-                                    </button>
-                                    <button className="cancel-btn" onClick={handleHistoryCancelEdit}>
-                                      إلغاء
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
+                  {/* Advance Amount */}
+                  <div className="form-group">
+                    <label htmlFor="advanceAmount" className="form-label">
+                      قيمة الصرفة (ريال) <span className="required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="advanceAmount"
+                      className="form-input"
+                      placeholder="0"
+                      min="0"
+                      max={selectedWorker?.basicSalary || ''}
+                      step="0.01"
+                      value={advanceAmount}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setAdvanceAmount(value);
+                        // Validate that advance doesn't exceed basic salary
+                        if (selectedWorker) {
+                          const advanceNum = Number(value);
+                          if (advanceNum > selectedWorker.basicSalary) {
+                            toast.error(`الصرفة لا يمكن أن تكون أكبر من الراتب الأساسي (${selectedWorker.basicSalary})`);
                           }
-
-                          return (
-                            <tr key={entry._id}>
-                              <td>{`${entry.amount.toLocaleString()} ريال`}</td>
-                              <td>{totalLabel}</td>
-                              <td>{basicLabel}</td>
-                              <td>{finalLabel}</td>
-                              <td>
-                                <div className="notes-cell">
-                                  {entry.notes ? (
-                                    <span className="notes-text" title={entry.notes}>
-                                      {entry.notes.length > 50 ? `${entry.notes.substring(0, 50)}...` : entry.notes}
-                                    </span>
-                                  ) : (
-                                    <span className="no-notes">لا يوجد وصف</span>
-                                  )}
-                                </div>
-                              </td>
-                              <td>{formatDateTime(entry.createdAt)}</td>
-                              <td>{formatDateTime(entry.updatedAt || entry.createdAt)}</td>
-                              <td>{adminName}</td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button className="edit-button" onClick={() => handleHistoryEdit(entry)} title="تعديل">
-                                    ✏️
-                                  </button>
-                                  <button className="delete-button" onClick={() => handleHistoryDelete(entry._id)} title="حذف">
-                                    🗑️
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                        }
+                      }}
+                      required
+                    />
+                    {selectedWorker && (
+                      <div className="form-hint">
+                        الحد الأقصى: {selectedWorker.basicSalary} ريال
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  {/* Notes */}
+                  <div className="form-group">
+                    <label htmlFor="notes" className="form-label">
+                      الوصف أو الملاحظات
+                    </label>
+                    <textarea
+                      id="notes"
+                      className="form-textarea"
+                      rows={4}
+                      placeholder="أضف وصف أو ملاحظات حول الصرفة (اختياري)..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="form-actions">
+                    <button
+                      type="submit"
+                      className="submit-button"
+                      disabled={isSubmitting || !selectedWorker || !advanceAmount}
+                    >
+                      {isSubmitting ? 'جاري الإضافة...' : 'إضافة الصرفة'}
+                    </button>
+                  </div>
+                </form>
               </div>
-            </div>
-          </div>
-        )}
+
+              {showHistoryModal && selectedWorker && (
+                <div className="advance-history-overlay">
+                  <div className="advance-history-modal">
+                    <div className="advance-history-modal__header">
+                      <h2>سجل صرفات {selectedWorker.name} لشهر {formatMonthLabel(currentMonthNumber, currentYearNumber)} {currentYearNumber}</h2>
+                      <button type="button" className="modal-close-button" onClick={closeHistoryModal}>
+                        ✕
+                      </button>
+                    </div>
+                    <div className="advance-history-modal__body">
+                      {historyLoading ? (
+                        <div className="loading-container">
+                          <div className="loading-spinner"></div>
+                          <p>جاري التحميل...</p>
+                        </div>
+                      ) : historyError ? (
+                        <div className="error-message">{historyError}</div>
+                      ) : workerAdvances.length === 0 ? (
+                        <div className="no-advances modal-empty-state">
+                          <div className="no-advances-icon">💰</div>
+                          <h3>لا توجد صرفات</h3>
+                          <p>لم يتم إضافة أي صرفات لهذا الموظف خلال الشهر الحالي</p>
+                        </div>
+                      ) : (
+                        <div className="modal-table-wrapper">
+                          <table className="modal-advance-table">
+                            <thead>
+                              <tr>
+                                <th>المبلغ</th>
+                                <th>إجمالي الشهر</th>
+                                <th>الراتب الأساسي</th>
+                                <th>الراتب النهائي</th>
+                                <th>الوصف/الملاحظات</th>
+                                <th>تاريخ الإضافة</th>
+                                <th>آخر تحديث</th>
+                                <th>المشرف</th>
+                                <th>الإجراءات</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {workerAdvances.map(entry => {
+                                const isEditing = historyEditingId === entry._id;
+                                const totalLabel = entry.totalAdvance !== null && entry.totalAdvance !== undefined
+                                  ? `${entry.totalAdvance.toLocaleString()} ريال`
+                                  : '--';
+                                const basicLabel = entry.basicSalary !== null && entry.basicSalary !== undefined
+                                  ? `${entry.basicSalary.toLocaleString()} ريال`
+                                  : '--';
+                                const finalLabel = entry.finalSalary !== null && entry.finalSalary !== undefined
+                                  ? `${entry.finalSalary.toLocaleString()} ريال`
+                                  : '--';
+                                const adminName = entry.adminName || 'غير محدد';
+
+                                if (isEditing) {
+                                  const currentTotal = entry.totalAdvance ?? 0;
+                                  const previewTotal = currentTotal - entry.amount + Number(historyEditForm.amount || 0);
+
+                                  return (
+                                    <tr key={entry._id}>
+                                      <td>
+                                        <input
+                                          type="number"
+                                          className="edit-input"
+                                          min="0"
+                                          max={entry.basicSalary ?? undefined}
+                                          value={historyEditForm.amount}
+                                          onChange={e => setHistoryEditForm({ ...historyEditForm, amount: e.target.value })}
+                                        />
+                                      </td>
+                                      <td>
+                                        {entry.totalAdvance !== null && entry.totalAdvance !== undefined
+                                          ? `${previewTotal.toLocaleString()} ريال`
+                                          : '--'}
+                                      </td>
+                                      <td>{basicLabel}</td>
+                                      <td>{finalLabel}</td>
+                                      <td>
+                                        <textarea
+                                          className="edit-textarea"
+                                          rows={2}
+                                          value={historyEditForm.notes}
+                                          onChange={e => setHistoryEditForm({ ...historyEditForm, notes: e.target.value })}
+                                          placeholder="الوصف أو الملاحظات..."
+                                        />
+                                      </td>
+                                      <td>{formatDateTime(entry.createdAt)}</td>
+                                      <td>{formatDateTime(entry.updatedAt || entry.createdAt)}</td>
+                                      <td>{adminName}</td>
+                                      <td>
+                                        <div className="edit-actions">
+                                          <button className="save-btn" onClick={() => handleHistoryUpdate(entry._id)}>
+                                            حفظ
+                                          </button>
+                                          <button className="cancel-btn" onClick={handleHistoryCancelEdit}>
+                                            إلغاء
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                }
+
+                                return (
+                                  <tr key={entry._id}>
+                                    <td>{`${entry.amount.toLocaleString()} ريال`}</td>
+                                    <td>{totalLabel}</td>
+                                    <td>{basicLabel}</td>
+                                    <td>{finalLabel}</td>
+                                    <td>
+                                      <div className="notes-cell">
+                                        {entry.notes ? (
+                                          <span className="notes-text" title={entry.notes}>
+                                            {entry.notes.length > 50 ? `${entry.notes.substring(0, 50)}...` : entry.notes}
+                                          </span>
+                                        ) : (
+                                          <span className="no-notes">لا يوجد وصف</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td>{formatDateTime(entry.createdAt)}</td>
+                                    <td>{formatDateTime(entry.updatedAt || entry.createdAt)}</td>
+                                    <td>{adminName}</td>
+                                    <td>
+                                      <div className="action-buttons">
+                                        <button className="edit-button" onClick={() => handleHistoryEdit(entry)} title="تعديل">
+                                          ✏️
+                                        </button>
+                                        <button className="delete-button" onClick={() => handleHistoryDelete(entry._id)} title="حذف">
+                                          🗑️
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>

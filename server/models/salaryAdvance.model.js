@@ -47,6 +47,10 @@ const salaryAdvanceSchema = new Schema({
         type: String,
         trim: true,
     },
+    expenseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Expenses",
+    },
 }, {
     timestamps: true,
 });
