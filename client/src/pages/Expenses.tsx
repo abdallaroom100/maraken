@@ -47,7 +47,7 @@ const Expenses = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
+  console.log(workers)
   const token = useMemo(() => getToken?.() ?? admin?.token ?? null, [admin, getToken]);
   const currentDate = useMemo(() => new Date(), []);
   const currentYearNumber = useMemo(() => currentDate.getFullYear(), [currentDate]);
@@ -376,7 +376,8 @@ const Expenses = () => {
         })
       });
 
-      const data = await response.json();
+      await response.json();
+
       // Reset form
       setSelectedWorker(null);
       setSearchQuery('');
@@ -389,7 +390,7 @@ const Expenses = () => {
       setHistoryEditForm({ amount: '', notes: '' });
 
       if (showHistoryModal) {
-        fetchWorkerAdvanceHistory(workerId);
+        fetchWorkerAdvanceHistory(selectedWorker._id);
       }
     } catch (error) {
       console.error('Error adding advance:', error);

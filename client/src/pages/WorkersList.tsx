@@ -171,12 +171,13 @@ const WorkersList = () => {
           <div className="table-header flex-wrap gap-4">
             <h2 className='!m-0'>قائمة الموظفين</h2>
 
-            <div className="flex gap-4 items-center flex-wrap">
+            <div className="flex gap-4 items-center flex-wrap  justify-end">
               <div className="flex gap-2 items-center">
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  className="p-2 border rounded-md"
+                  className="p-2 border rounded-md "
+                  style={{ width: '120px' }}
                 >
                   {months.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -185,7 +186,8 @@ const WorkersList = () => {
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="p-2 border rounded-md"
+                  className="p-2 border rounded-md !w-[120px]"
+                  style={{ width: '120px' }}
                 >
                   {years.map(y => (
                     <option key={y} value={y}>{y}</option>
