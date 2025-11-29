@@ -24,7 +24,7 @@ const app = express()
 
 app.use(cors());
 app.use(express.json());
-
+app.set('trust proxy', true)
 // API Routes
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/revenues", revenueRoutes);
