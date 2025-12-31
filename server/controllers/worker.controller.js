@@ -4,13 +4,13 @@ import { Worker, Salary, SalaryPayment, Expenses } from '../models/index.js';
 export const createWorker = async (req, res) => {
     try {
         const { name, job, basicSalary, identityNumber } = req.body;
-        
+
         // Check if worker with same identity number exists
         const existingWorker = await Worker.findOne({ identityNumber });
         if (existingWorker) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'موظف بهذا الرقم القومي موجود بالفعل' 
+            return res.status(400).json({
+                success: false,
+                message: 'موظف بهذا الرقم القومي موجود بالفعل'
             });
         }
 
@@ -41,7 +41,7 @@ export const createWorker = async (req, res) => {
 export const getAllWorkers = async (req, res) => {
     try {
         const workers = await Worker.find({ isActive: true }).sort({ createdAt: -1 });
-        
+
         res.status(200).json({
             success: true,
             data: workers
@@ -60,7 +60,7 @@ export const getWorkerById = async (req, res) => {
     try {
         const { id } = req.params;
         const worker = await Worker.findById(id);
-        
+
         if (!worker) {
             return res.status(404).json({
                 success: false,
@@ -89,9 +89,9 @@ export const updateWorker = async (req, res) => {
 
         // Check if identity number is being changed and if it already exists
         if (identityNumber) {
-            const existingWorker = await Worker.findOne({ 
-                identityNumber, 
-                _id: { $ne: id } 
+            const existingWorker = await Worker.findOne({
+                identityNumber,
+                _id: { $ne: id }
             });
             if (existingWorker) {
                 return res.status(400).json({
@@ -137,7 +137,7 @@ export const updateWorker = async (req, res) => {
 export const deleteWorker = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const worker = await Worker.findByIdAndUpdate(
             id,
             { isActive: false },
@@ -171,7 +171,7 @@ export const getWorkerSalaryHistory = async (req, res) => {
         const { year, month } = req.query;
 
         let query = { workerId: id };
-        
+
         if (year) query.year = Number(year);
         if (month) query.month = Number(month);
 
@@ -179,9 +179,21 @@ export const getWorkerSalaryHistory = async (req, res) => {
             .sort({ year: -1, month: -1 })
             .populate('workerId', 'name job');
 
+        // Recalculate finalSalary relative to components to ensure consistency on read
+        const processedSalaries = salaries.map(s => {
+            const salary = s.toObject();
+            const absenceValue = Math.floor((salary.basicSalary / 30) * (salary.absenceDays || 0));
+
+            // Re-calculate final salary: basic + incentives - deductions - withdrawals - advance - absence
+            // This ensures that even if DB is stale, the UI gets the correct math.
+            salary.finalSalary = salary.basicSalary + (salary.incentives || 0) - (salary.deductions || 0) - (salary.withdrawals || 0) - (salary.advance || 0) - absenceValue;
+
+            return salary;
+        });
+
         res.status(200).json({
             success: true,
-            data: salaries
+            data: processedSalaries
         });
     } catch (error) {
         res.status(500).json({
@@ -196,7 +208,7 @@ export const getWorkerSalaryHistory = async (req, res) => {
 export const searchWorkers = async (req, res) => {
     try {
         const { name } = req.query;
-        
+
         if (!name || name.trim() === '') {
             return res.status(400).json({
                 success: false,
@@ -209,9 +221,9 @@ export const searchWorkers = async (req, res) => {
             isActive: true,
             name: { $regex: name.trim(), $options: 'i' } // case-insensitive search
         })
-        .select('_id name job basicSalary')
-        .limit(20) // Limit to 20 results
-        .sort({ name: 1 });
+            .select('_id name job basicSalary')
+            .limit(20) // Limit to 20 results
+            .sort({ name: 1 });
 
         res.status(200).json({
             success: true,

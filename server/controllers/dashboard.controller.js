@@ -156,7 +156,13 @@ export const getDashboardStats = async (req, res) => {
                 if (salary.isPaid) {
                     remaining = 0;
                 } else {
-                    remaining = salary.finalSalary ?? worker.basicSalary;
+                    // Recalculate to ensure absence deduction is applied
+                    const basic = salary.basicSalary || worker.basicSalary;
+                    const absence = Math.floor((basic / 30) * (salary.absenceDays || 0));
+                    // use basic + incentives - deductions - withdrawals - advance - absence
+                    // Or trust finalSalary if we are sure it's updated. But user complained.
+                    // Let's recalculate it to be safe, similar to worker controller.
+                    remaining = basic + (salary.incentives || 0) - (salary.deductions || 0) - (salary.withdrawals || 0) - (salary.advance || 0) - absence;
                 }
             } else {
                 remaining = worker.basicSalary;
@@ -438,9 +444,10 @@ export const getSalaryStats = async (req, res) => {
                 if (salary.isPaid) {
                     remainingSalary = 0; // تم الدفع بالكامل
                 } else {
-                    // لم يتم الدفع، نأخذ الراتب النهائي (قد يكون 0 أو قيمة موجبة)
-                    // نستخدم القيمة الموجودة أو نعتبرها 0 إذا كانت غير موجودة (حماية)
-                    remainingSalary = salary.finalSalary ?? worker.basicSalary;
+                    // لم يتم الدفع، نعيد حساب الراتب النهائي لضمان خصم الغياب
+                    const basic = salary.basicSalary || worker.basicSalary;
+                    const absence = Math.floor((basic / 30) * (salary.absenceDays || 0));
+                    remainingSalary = basic + (salary.incentives || 0) - (salary.deductions || 0) - (salary.withdrawals || 0) - (salary.advance || 0) - absence;
                 }
             } else {
                 // لم يوجد سجل راتب، الراتب المتبقي هو الراتب الأساسي

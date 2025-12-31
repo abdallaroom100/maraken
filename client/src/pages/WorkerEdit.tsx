@@ -48,7 +48,7 @@ const WorkerEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [advanceAmount, setAdvanceAmount] = useState('0')
   const [isAddingAdvance, setIsAddingAdvance] = useState(false)
-  
+
   // Check if admin is moderator
   const isModerator = admin?.role === 'moderator'
 
@@ -61,7 +61,7 @@ const WorkerEdit = () => {
     }
     return fetch(input, { ...init, headers })
   }
-  
+
   // Form data for worker update
   const [formData, setFormData] = useState({
     name: workerFromState?.name || '',
@@ -135,7 +135,7 @@ const WorkerEdit = () => {
       setLoading(true)
       const response = await fetchWithAuth(`/api/workers/${id}`)
       const data = await response.json()
-      
+
       if (data.success) {
         setWorker(data.data)
         setFormData({
@@ -163,9 +163,9 @@ const WorkerEdit = () => {
       setLoadingSalary(true)
       const response = await fetchWithAuth(`/api/workers/${worker?._id}/salary-history`)
       const data = await response.json()
-      
+
       console.log('Salary history response:', data)
-      
+
       if (data.success) {
         setSalaryHistory(data.data)
       }
@@ -181,19 +181,19 @@ const WorkerEdit = () => {
       // Use a simpler approach - get all salaries for this worker and filter
       const response = await fetchWithAuth(`/api/workers/${worker?._id}/salary-history`)
       const data = await response.json()
-      
+
       console.log('All salary history:', data)
-      
+
       if (data.success && data.data) {
         // Find the salary for this specific year and month
-        const salary = data.data.find((s: any) => 
+        const salary = data.data.find((s: any) =>
           Number(s.year) === Number(year) && Number(s.month) === Number(month)
         )
-        
+
         console.log('Looking for salary with year:', year, 'month:', month)
         console.log('Available salaries:', data.data.map((s: any) => ({ year: s.year, month: s.month, isPaid: s.isPaid })))
         console.log('Found salary:', salary)
-        
+
         if (salary) {
           // Salary exists - load it for editing
           setCurrentSalary(salary)
@@ -266,7 +266,7 @@ const WorkerEdit = () => {
   const handleUpdateWorker = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     try {
       const response = await fetchWithAuth(`/api/workers/${id}`, {
         method: 'PUT',
@@ -282,7 +282,7 @@ const WorkerEdit = () => {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         setWorker(data.data)
         alert('تم تحديث بيانات الموظف بنجاح')
@@ -296,11 +296,33 @@ const WorkerEdit = () => {
     }
   }
 
-  // Create or update salary with payment
+
+  // Auto-calculate deduction when absence days change
+  useEffect(() => {
+    if (salaryForm.basicSalary && salaryForm.absenceDays) {
+      const basic = Number(salaryForm.basicSalary);
+      const days = Number(salaryForm.absenceDays);
+      const deduction = Math.floor((basic / 30) * days);
+
+      // Update deductions field explicitly if it's purely an absence deduction
+      // Or we can just let the backend handle the calculation while we display it?
+      // User said: "In WorkerEdit, he will update absence days from here".
+      // The backend calculation I added takes absenceDays and subtracts appropriate amount from finalSalary.
+      // But maybe the user wants to see the deduction value in the "deductions" field?
+      // Actually, my backend logic SUBTRACTS absenceValue separately from 'deductions'.
+      // "finalSalary = baseSalary + incentives - deductions - withdrawals - totalAdvance - absenceValue"
+      // So I don't need to put the absence deduction INTO the 'deductions' field.
+      // I just need to make sure absenceDays is sent to the backend.
+
+      // However, it would be nice to show the calculated value somewhere or correct the final salary preview in frontend if any.
+    }
+  }, [salaryForm.basicSalary, salaryForm.absenceDays]);
+
+  // Update salary with payment
   const handleSalarySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     try {
       // Calculate final salary
       const basicSalary = Number(salaryForm.basicSalary)
@@ -309,10 +331,12 @@ const WorkerEdit = () => {
       const deductions = Number(salaryForm.deductions)
       const withdrawals = Number(salaryForm.withdrawals)
       const advance = Number(salaryForm.advance || 0)
-      
-      // Calculate final salary (matching backend: basicSalary + incentives - deductions - withdrawals - advance)
-      const finalSalary = basicSalary + incentives - deductions - withdrawals - advance
-  console.log(finalSalary)
+
+      const absenceValue = Math.floor((basicSalary / 30) * absenceDays);
+
+      // Calculate final salary (matching backend logic)
+      const finalSalary = basicSalary + incentives - deductions - withdrawals - advance - absenceValue
+
       const salaryData = {
         workerId: worker?._id,
         year: salaryForm.year,
@@ -348,7 +372,7 @@ const WorkerEdit = () => {
       }
 
       const data = await response.json()
-      
+
       if (data.success) {
         // After creating/updating salary, mark it as paid
         if (currentSalary) {
@@ -378,7 +402,7 @@ const WorkerEdit = () => {
             })
           })
         }
-        
+
         alert(currentSalary ? 'تم تحديث الراتب ودفعه بنجاح' : 'تم حفظ الراتب ودفعه بنجاح')
         fetchSalaryHistory()
         loadSalaryData(salaryForm.year, salaryForm.month)
@@ -395,15 +419,22 @@ const WorkerEdit = () => {
   // Update salary data only (without payment)
   const handleUpdateSalaryData = async () => {
     setIsSubmitting(true)
-    
+
     try {
+      const basicSalary = Number(salaryForm.basicSalary)
+      const absenceDays = Number(salaryForm.absenceDays)
+      const incentives = Number(salaryForm.incentives)
+      const deductions = Number(salaryForm.deductions)
+      const withdrawals = Number(salaryForm.withdrawals)
+      const advance = Number(salaryForm.advance || 0)
+
       const salaryData = {
-        basicSalary: Number(salaryForm.basicSalary),
-        absenceDays: Number(salaryForm.absenceDays),
-        incentives: Number(salaryForm.incentives),
-        deductions: Number(salaryForm.deductions),
-        withdrawals: Number(salaryForm.withdrawals),
-        advance: Number(salaryForm.advance || 0),
+        basicSalary,
+        absenceDays,
+        incentives,
+        deductions,
+        withdrawals,
+        advance,
         notes: salaryForm.notes
       }
 
@@ -416,7 +447,7 @@ const WorkerEdit = () => {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         alert('تم تحديث بيانات الراتب بنجاح')
         fetchSalaryHistory()
@@ -434,7 +465,7 @@ const WorkerEdit = () => {
   // Mark salary as paid
   const handleMarkAsPaid = async () => {
     if (!currentSalary) return
-    
+
     if (!confirm('هل أنت متأكد من دفع هذا الراتب؟')) return
 
     try {
@@ -452,7 +483,7 @@ const WorkerEdit = () => {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         alert('تم دفع الراتب بنجاح')
         fetchSalaryHistory()
@@ -470,7 +501,7 @@ const WorkerEdit = () => {
   // Cancel payment
   const handleCancelPayment = async () => {
     if (!currentSalary) return
-    
+
     if (!confirm('هل أنت متأكد من إلغاء دفع هذا الراتب؟')) return
 
     try {
@@ -486,7 +517,7 @@ const WorkerEdit = () => {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         alert('تم إلغاء دفع الراتب بنجاح')
         fetchSalaryHistory()
@@ -620,7 +651,7 @@ const WorkerEdit = () => {
       <div className="!min-h-screen !flex !items-center !justify-center !bg-gray-50">
         <div className="!bg-white !rounded-lg !shadow-lg !p-8 !text-center">
           <p className="!text-red-600 !text-xl !font-bold">الموظف غير موجود</p>
-          <button 
+          <button
             onClick={() => navigate('/workers-list')}
             className="!mt-4 !px-6 !py-2 !bg-blue-600 !text-white !rounded-lg !hover:bg-blue-700 !transition-colors"
           >
@@ -637,7 +668,7 @@ const WorkerEdit = () => {
       <div className="!max-w-7xl !mx-auto !px-4 !mb-8">
         <div className="!bg-white !rounded-xl !shadow-lg !p-6">
           <div className="!flex !items-center !justify-between !flex-wrap !gap-4">
-            <button 
+            <button
               className="!flex !items-center !gap-2 !px-4 !py-2 !bg-gray-100 !w-fit !rounded-lg  !hover:bg-gray-200 !transition-all !duration-300 !hover:shadow-md"
               onClick={() => navigate('/workers-list')}
             >
@@ -652,7 +683,7 @@ const WorkerEdit = () => {
       </div>
 
       <div className="!max-w-7xl !mx-auto md:!px-4 !space-y-8">
-      
+
         {/* تحديث بيانات الموظف */}
         <div className="form-section !bg-white !rounded-xl !shadow-lg !overflow-hidden">
           <div className="!bg-gradient-to-r !from-green-600 !to-teal-600 !px-6 !py-4">
@@ -660,65 +691,65 @@ const WorkerEdit = () => {
           </div>
           <div className="md:!p-6">
             <form onSubmit={handleUpdateWorker} className="!space-y-6 ">
-             <div className='flex flex-col '>
-             <div className="form-row !grid !grid-cols-1 !md:grid-cols-2 !gap-6">
-                <div className="form-group !space-y-2">
-                  <label htmlFor="name" className="!block !text-sm !font-medium !text-gray-700">اسم الموظف</label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
-                    required
-                  />
+              <div className='flex flex-col '>
+                <div className="form-row !grid !grid-cols-1 !md:grid-cols-2 !gap-6">
+                  <div className="form-group !space-y-2">
+                    <label htmlFor="name" className="!block !text-sm !font-medium !text-gray-700">اسم الموظف</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
+                      required
+                    />
+                  </div>
+                  <div className="form-group !space-y-2 min-w-[210px]">
+                    <label htmlFor="job" className="!block !text-sm !font-medium !text-gray-700">الوظيفة</label>
+                    <input
+                      type="text"
+                      id="job"
+                      value={formData.job}
+                      onChange={handleInputChange}
+                      className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
+                      required
+                    />
+                  </div>
+                  <div className="form-group !space-y-2 min-w-[210px]">
+                    <label htmlFor="basicSalary" className="!block !text-sm !font-medium !text-gray-700">الراتب الأساسي (ريال)</label>
+                    <input
+                      type="number"
+                      id="basicSalary"
+                      min="0"
+                      value={formData.basicSalary}
+                      onChange={handleInputChange}
+                      className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
+                      required
+                    />
+                  </div>
+                  <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                    <label htmlFor="identityNumber" className="!block !text-sm !font-medium !text-gray-700">رقم الهوية</label>
+                    <input
+                      type="text"
+                      id="identityNumber"
+                      value={formData.identityNumber}
+                      onChange={handleInputChange}
+                      className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="form-group !space-y-2 min-w-[210px]">
-                  <label htmlFor="job" className="!block !text-sm !font-medium !text-gray-700">الوظيفة</label>
-                  <input
-                    type="text"
-                    id="job"
-                    value={formData.job}
-                    onChange={handleInputChange}
-                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
-                    required
-                  />
-                </div>
-                <div className="form-group !space-y-2 min-w-[210px]">
-                  <label htmlFor="basicSalary" className="!block !text-sm !font-medium !text-gray-700">الراتب الأساسي (ريال)</label>
-                  <input
-                    type="number"
-                    id="basicSalary"
-                    min="0"
-                    value={formData.basicSalary}
-                    onChange={handleInputChange}
-                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
-                    required
-                  />
-                </div>
-                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
-                  <label htmlFor="identityNumber" className="!block !text-sm !font-medium !text-gray-700">رقم الهوية</label>
-                  <input
-                    type="text"
-                    id="identityNumber"
-                    value={formData.identityNumber}
-                    onChange={handleInputChange}
-                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-blue-500 !focus:border-transparent !transition-all !duration-300"
-                    required
-                  />
+                <div className='flex justify-center items-center'>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{ maxWidth: '300px', margin: 'auto', background: "linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)" }}
+                    className="update-btn !w-full !md:w-auto !px-8 !py-3 max-w-[400px] mx-auto text-center flex justify-center  !bg-gradient-to-r !from-green-600 !to-teal-600 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-teal-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105"
+                  >
+                    {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
+                  </button>
                 </div>
               </div>
-              <div className='flex justify-center items-center'>
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                style={{maxWidth: '300px', margin: 'auto',background:"linear-gradient(98deg, #24324e 0%, #3f4b8e 100%)"}}
-                className="update-btn !w-full !md:w-auto !px-8 !py-3 max-w-[400px] mx-auto text-center flex justify-center  !bg-gradient-to-r !from-green-600 !to-teal-600 !text-white !font-semibold !rounded-lg !hover:from-green-700 !hover:to-teal-700 !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105"
-              >
-                {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
-              </button>
-              </div>
-             </div>
 
             </form>
           </div>
@@ -736,19 +767,18 @@ const WorkerEdit = () => {
                 <span className="!text-sm !font-medium !text-gray-700">
                   حالة الراتب: {getMonthName(salaryForm.month)} {salaryForm.year}
                 </span>
-                <span className={`!inline-flex !px-4 !py-2 !text-sm !font-semibold !rounded-full !transition-all !duration-300 ${
-                  currentSalary?.isPaid 
-                    ? '!bg-green-100 !text-green-800 !border !border-green-200' 
+                <span className={`!inline-flex !px-4 !py-2 !text-sm !font-semibold !rounded-full !transition-all !duration-300 ${currentSalary?.isPaid
+                    ? '!bg-green-100 !text-green-800 !border !border-green-200'
                     : '!bg-red-100 !text-red-800 !border !border-red-200'
-                }`}>
+                  }`}>
                   {currentSalary?.isPaid ? '✅ تم الدفع' : '❌ لم يتم الدفع'}
                 </span>
               </div>
             </div>
-            
+
             <form onSubmit={handleSalarySubmit} className="salary-form !p-0 md:!p-4 sm:!space-y-6 !flex flex-col">
               <div className="form-row container mx-auto w-full !flex flex-wrap !gap-6  items-center">
-              <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="month" className="!block !text-sm !font-medium !text-gray-700">الشهر</label>
                   <select
                     id="month"
@@ -763,22 +793,22 @@ const WorkerEdit = () => {
                   </select>
                 </div>
 
- 
+
                 <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
-    <label htmlFor="year" className="!block !text-sm !font-medium !text-gray-700">السنة</label>
-    <select
-      id="year"
-      value={salaryForm.year}
-      onChange={handleSalaryInputChange}
-      className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
-      required
-    >
-      {years.map(year => (
-        <option key={year} value={year}>{year}</option>
-      ))}
-    </select>
-  </div>
-  <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
+                  <label htmlFor="year" className="!block !text-sm !font-medium !text-gray-700">السنة</label>
+                  <select
+                    id="year"
+                    value={salaryForm.year}
+                    onChange={handleSalaryInputChange}
+                    className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
+                    required
+                  >
+                    {years.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
                   <label htmlFor="basicSalary" className="!block !text-sm !font-medium !text-gray-700">الراتب الأساسي (ريال)</label>
                   <input
                     type="number"
@@ -835,7 +865,7 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300"
                   />
                 </div>
-                
+
                 {/* حقل الصرفة - للأدمن moderator فقط */}
                 {isModerator && (
                   <div className="form-group !space-y-2 w-full sm:w-auto sm:!min-w-[210px]">
@@ -880,7 +910,7 @@ const WorkerEdit = () => {
                     )}
                   </div>
                 )}
-                
+
                 <div className="form-group !space-y-2 !md:col-span-2 w-full !lg:col-span-1 lg:min-w-[450px]">
                   <label htmlFor="notes" className="!block !text-sm !font-medium !text-gray-700">ملاحظات</label>
                   <textarea
@@ -892,56 +922,56 @@ const WorkerEdit = () => {
                     className="!w-full !px-4 !py-3 !border !border-gray-300 !rounded-lg !focus:ring-2 !focus:ring-purple-500 !focus:border-transparent !transition-all !duration-300 !resize-none"
                   />
                 </div>
-        
+
 
               </div>
-              
+
               {/* أزرار الإجراءات */}
-              <div  className="salary-buttons !flex !flex-wrap !gap-4 !pt-6 !border-t !border-gray-200 !justify-center !items-center">
+              <div className="salary-buttons !flex !flex-wrap !gap-4 !pt-6 !border-t !border-gray-200 !justify-center !items-center">
                 {/* زر تحديث البيانات */}
 
                 {/* زر دفع الراتب أو إلغاء الدفع */}
-                <div  className='!flex justify-center items-center !gap-4'>
-                <button 
-                  type="button" 
-                  onClick={handleUpdateSalaryData}
-                  title='تحديث البيانات'
-                  disabled={isSubmitting || !currentSalary}
-                  className="salary-btn bg-blue-600 !flex-1 !min-w-0 !px-6 !py-3 text-nowrap !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
-                >
-                  {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
-                </button>
-                {currentSalary?.isPaid ? (
-                  <button 
-                    type="button" 
-                    onClick={handleCancelPayment}
-                    disabled={isSubmitting}
-                    className="salary-btn bg-red-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
-                  >
-                    {isSubmitting ? 'جاري الإلغاء...' : '❌ إلغاء الدفع'}
-                  </button>
-                ) : (
-                  <button 
-                    type="button" 
-                    onClick={handleMarkAsPaid}
+                <div className='!flex justify-center items-center !gap-4'>
+                  <button
+                    type="button"
+                    onClick={handleUpdateSalaryData}
+                    title='تحديث البيانات'
                     disabled={isSubmitting || !currentSalary}
-                    className="salary-btn bg-green-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    className="salary-btn bg-blue-600 !flex-1 !min-w-0 !px-6 !py-3 text-nowrap !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
                   >
-                    {isSubmitting ? 'جاري الدفع...' : '✅ دفع الراتب'}
+                    {isSubmitting ? 'جاري التحديث...' : 'تحديث البيانات'}
                   </button>
-                )}
+                  {currentSalary?.isPaid ? (
+                    <button
+                      type="button"
+                      onClick={handleCancelPayment}
+                      disabled={isSubmitting}
+                      className="salary-btn bg-red-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    >
+                      {isSubmitting ? 'جاري الإلغاء...' : '❌ إلغاء الدفع'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleMarkAsPaid}
+                      disabled={isSubmitting || !currentSalary}
+                      className="salary-btn bg-green-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    >
+                      {isSubmitting ? 'جاري الدفع...' : '✅ دفع الراتب'}
+                    </button>
+                  )}
 
-                {/* زر الحفظ والدفع (للرواتب الجديدة) */}
-                {!currentSalary && (
-                  <button 
-                    type="button" 
-                    onClick={handleSalarySubmit}
-                    disabled={isSubmitting}
-                    className="salary-btn bg-purple-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
-                  >
-                    {isSubmitting ? 'جاري الحفظ...' : '💾 حفظ ودفع الراتب'}
-                  </button>
-                )}
+                  {/* زر الحفظ والدفع (للرواتب الجديدة) */}
+                  {!currentSalary && (
+                    <button
+                      type="button"
+                      onClick={handleSalarySubmit}
+                      disabled={isSubmitting}
+                      className="salary-btn bg-purple-600 !flex-1 !min-w-0 !px-6 !py-3 !text-white !font-semibold !rounded-lg !disabled:opacity-50 !disabled:cursor-not-allowed !transition-all !duration-300 !transform !hover:scale-105 !shadow-lg"
+                    >
+                      {isSubmitting ? 'جاري الحفظ...' : '💾 حفظ ودفع الراتب'}
+                    </button>
+                  )}
                 </div>
               </div>
             </form>
@@ -993,11 +1023,10 @@ const WorkerEdit = () => {
                           {salary.basicSalary.toLocaleString()} ريال
                         </td>
                         <td className="!px-4 !py-4 !text-center">
-                          <span className={`!inline-flex !items-center !justify-center !w-8 !h-8 !rounded-full !text-sm !font-medium ${
-                            salary.absenceDays > 0 
-                              ? '!bg-red-100 !text-red-800' 
+                          <span className={`!inline-flex !items-center !justify-center !w-8 !h-8 !rounded-full !text-sm !font-medium ${salary.absenceDays > 0
+                              ? '!bg-red-100 !text-red-800'
                               : '!bg-green-100 !text-green-800'
-                          }`}>
+                            }`}>
                             {salary.absenceDays}
                           </span>
                         </td>
@@ -1027,11 +1056,10 @@ const WorkerEdit = () => {
                           </span>
                         </td>
                         <td className="!px-4 !py-4 !text-center">
-                          <span className={`!inline-flex !items-center !px-3 !py-1 !text-xs !font-semibold !rounded-full !transition-all !duration-300 ${
-                            salary.isPaid 
-                              ? '!bg-green-100 !text-green-800 !border !border-green-200' 
+                          <span className={`!inline-flex !items-center !px-3 !py-1 !text-xs !font-semibold !rounded-full !transition-all !duration-300 ${salary.isPaid
+                              ? '!bg-green-100 !text-green-800 !border !border-green-200'
                               : '!bg-red-100 !text-red-800 !border !border-red-200'
-                          }`}>
+                            }`}>
                             {salary.isPaid ? '✅ تم الدفع' : '❌ لم يتم الدفع'}
                           </span>
                         </td>

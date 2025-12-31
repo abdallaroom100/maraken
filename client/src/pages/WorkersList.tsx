@@ -18,6 +18,7 @@ interface Worker {
 interface WorkerAdvance {
   advance: number
   finalSalary: number
+  absenceDays?: number
 }
 
 const WorkersList = () => {
@@ -69,14 +70,17 @@ const WorkersList = () => {
               const salary = data.data.find((s: any) => Number(s.year) === selectedYear && Number(s.month) === selectedMonth)
               statusObj[worker._id] = salary ? !!salary.isPaid : null
               if (salary) {
+                console.log(`[WorkersList] Worker ${worker._id}: Advance=${salary.advance}, Final=${salary.finalSalary}, Absence=${salary.absenceDays}`);
                 advancesObj[worker._id] = {
                   advance: salary.advance || 0,
-                  finalSalary: salary.finalSalary ?? worker.basicSalary
+                  finalSalary: salary.finalSalary ?? worker.basicSalary,
+                  absenceDays: salary.absenceDays || 0
                 }
               } else {
                 advancesObj[worker._id] = {
                   advance: 0,
-                  finalSalary: worker.basicSalary
+                  finalSalary: worker.basicSalary,
+                  absenceDays: 0
                 }
               }
             } else {
@@ -253,9 +257,10 @@ const WorkersList = () => {
                 <th>اسم الموظف</th>
                 <th>الوظيفة</th>
                 <th>الراتب الأساسي</th>
+                <th style={{ textAlign: 'center' }}>أيام الغياب</th>
+                <th style={{ textAlign: 'center' }}>خصم الغياب</th>
                 <th>الصرفات</th>
                 <th>الراتب النهائي</th>
-                <th>رقم الهوية</th>
                 <th>تاريخ الإضافة</th>
                 <th>حالة الراتب ({months.find(m => m.value === selectedMonth)?.label} {selectedYear})</th>
                 <th>الإجراءات</th>
@@ -268,8 +273,11 @@ const WorkersList = () => {
                 </tr>
               ) : (
                 workers.map((worker) => {
+                  const hasSalary = salaryStatus[worker._id] !== null
                   const advance = workerAdvances[worker._id]?.advance || 0
-                  const finalSalary = workerAdvances[worker._id]?.finalSalary ?? worker.basicSalary
+                  // If salary record exists, use its finalSalary (even if 0). Otherwise default to basicSalary.
+                  const finalSalary = hasSalary ? (workerAdvances[worker._id]?.finalSalary ?? 0) : worker.basicSalary
+
                   return (
                     <tr key={worker._id}>
                       <td style={{ textAlign: 'right', minWidth: 140 }} >
@@ -284,6 +292,18 @@ const WorkersList = () => {
                       <td>
                         <span className="salary-basic">{worker.basicSalary.toLocaleString()} ريال</span>
                       </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className="absence-days text-red-600 font-bold">
+                          {workerAdvances[worker._id]?.absenceDays || 0}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className="absence-deduction text-red-600 font-bold">
+                          {(Math.floor((worker.basicSalary / 30) * (workerAdvances[worker._id]?.absenceDays || 0)) > 0
+                            ? -Math.floor((worker.basicSalary / 30) * (workerAdvances[worker._id]?.absenceDays || 0))
+                            : 0).toLocaleString()} ريال
+                        </span>
+                      </td>
                       <td>
                         <span className="advance-amount" style={{ color: advance > 0 ? '#e53e3e' : '#718096', fontWeight: advance > 0 ? '600' : '400' }}>
                           {advance.toLocaleString()} ريال
@@ -293,9 +313,6 @@ const WorkersList = () => {
                         <span className="final-salary" style={{ color: '#48bb78', fontWeight: '600' }}>
                           {finalSalary.toLocaleString()} ريال
                         </span>
-                      </td>
-                      <td>
-                        <span className="identity-badge">{worker.identityNumber}</span>
                       </td>
                       <td>{new Date(worker.createdAt).toLocaleDateString('en-GB')}</td>
                       <td style={{ textAlign: 'center' }}>

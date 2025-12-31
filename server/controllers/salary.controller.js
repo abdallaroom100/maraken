@@ -31,7 +31,12 @@ export const recalcSalaryAdvanceTotals = async (salaryId) => {
     const deductions = Number(salary.deductions || 0);
     const withdrawals = Number(salary.withdrawals || 0);
 
-    salary.finalSalary = baseSalary + incentives - deductions - withdrawals - totalAdvance;
+    const absenceDays = Number(salary.absenceDays || 0);
+    const absenceValue = Math.floor((baseSalary / 30) * absenceDays);
+
+    console.log(`[recalc] SalaryId: ${salaryId}, Base: ${baseSalary}, Days: ${absenceDays}, Ded: ${absenceValue}`);
+    salary.finalSalary = baseSalary + incentives - deductions - withdrawals - totalAdvance - absenceValue;
+    console.log(`[recalc] Final: ${salary.finalSalary}`);
 
     // Auto-pay logic: if final salary is 0 or less, mark as paid
     if (salary.finalSalary <= 0) {
@@ -168,7 +173,8 @@ export const createOrUpdateSalary = async (req, res) => {
 
         // Calculate final salary (advance is subtracted from basicSalary)
         const advance = Number(req.body.advance || 0);
-        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advance;
+        const absenceValue = Math.floor((Number(basicSalary) / 30) * Number(absenceDays || 0));
+        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advance - absenceValue;
 
         // Check if salary record exists for this month
         let salary = await Salary.findOne({ workerId, year, month });
@@ -239,7 +245,8 @@ export const updateSalary = async (req, res) => {
 
         // Calculate final salary (advance is subtracted from basicSalary)
         const advanceAmount = Number(req.body.advance !== undefined ? req.body.advance : salary.advance || 0);
-        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advanceAmount;
+        const absenceValue = Math.floor((Number(basicSalary) / 30) * Number(absenceDays || 0));
+        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advanceAmount - absenceValue;
 
         // Update salary record
         salary.basicSalary = Number(basicSalary);
@@ -290,7 +297,10 @@ export const updateSalaryData = async (req, res) => {
 
         // Calculate final salary (advance is subtracted from basicSalary)
         const advance = Number(req.body.advance || 0);
-        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advance;
+        const absenceValue = Math.floor((Number(basicSalary) / 30) * Number(absenceDays || 0));
+        console.log(`[updateData] Worker: ${salary.workerId}, Base: ${basicSalary}, Days: ${absenceDays}, Ded: ${absenceValue}`);
+        const finalSalary = Number(basicSalary) + Number(incentives) - Number(deductions) - Number(withdrawals) - advance - absenceValue;
+        console.log(`[updateData] Final: ${finalSalary}`);
 
         // Update salary data only
         salary.basicSalary = Number(basicSalary);
