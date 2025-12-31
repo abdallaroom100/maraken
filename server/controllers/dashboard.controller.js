@@ -130,29 +130,45 @@ export const getDashboardStats = async (req, res) => {
         const activeWorkerIds = activeWorkers.map(w => w._id);
 
         // حساب إجمالي الرواتب المتبقية (finalSalary للموظفين النشطين الذين لم يتم دفع رواتبهم)
-        const unpaidSalaries = await Salary.aggregate([
-            {
-                $match: {
-                    ...salaryQuery,
-                    workerId: { $in: activeWorkerIds }
+        // حساب إجمالي الرواتب المتبقية (finalSalary للموظفين النشطين الذين لم يتم دفع رواتبهم)
+        // نبدأ من الموظفين لضمان شمول من ليس لديهم سجل راتب
+        const activeWorkersForStats = await Worker.find({ isActive: true }).lean();
+
+        // جلب سجلات الرواتب للشهر المحدد
+        const targetYear = parseInt(year || new Date().getFullYear());
+        const targetMonth = parseInt(month || new Date().getMonth() + 1);
+
+        const salariesForStats = await Salary.find({
+            year: targetYear,
+            month: targetMonth,
+            workerId: { $in: activeWorkersForStats.map(w => w._id) }
+        }).lean();
+
+        // حساب الرواتب المتبقية
+        let salaryStatsTotal = 0;
+        let salaryStatsCount = 0;
+
+        for (const worker of activeWorkersForStats) {
+            const salary = salariesForStats.find(s => s.workerId.toString() === worker._id.toString());
+            let remaining = 0;
+
+            if (salary) {
+                if (salary.isPaid) {
+                    remaining = 0;
+                } else {
+                    remaining = salary.finalSalary ?? worker.basicSalary;
                 }
-            },
-            {
-                $lookup: {
-                    from: "workers",
-                    localField: "workerId",
-                    foreignField: "_id",
-                    as: "worker"
-                }
-            },
-            { $unwind: "$worker" },
-            {
-                $match: {
-                    "worker.isActive": true
-                }
-            },
-            { $group: { _id: null, total: { $sum: "$finalSalary" }, count: { $sum: 1 } } }
-        ]);
+            } else {
+                remaining = worker.basicSalary;
+            }
+
+            if (remaining > 0) {
+                salaryStatsTotal += remaining;
+                salaryStatsCount++;
+            }
+        }
+
+        const unpaidSalaries = [{ total: salaryStatsTotal, count: salaryStatsCount }];
 
         // حساب إجمالي الرواتب المدفوعة (للإحصائيات الأخرى)
         let salaryPaymentQuery = {};
@@ -398,65 +414,60 @@ export const getSalaryStats = async (req, res) => {
         const activeWorkerIds = activeWorkers.map(w => w._id);
 
         // إجمالي الرواتب المتبقية (غير المدفوعة)
-        const totalSalaries = await Salary.aggregate([
-            {
-                $match: {
-                    ...salaryQuery,
-                    workerId: { $in: activeWorkerIds }
-                }
-            },
-            {
-                $lookup: {
-                    from: "workers",
-                    localField: "workerId",
-                    foreignField: "_id",
-                    as: "worker"
-                }
-            },
-            { $unwind: "$worker" },
-            {
-                $match: {
-                    "worker.isActive": true
-                }
-            },
-            { $group: { _id: null, total: { $sum: "$finalSalary" }, count: { $sum: 1 } } }
-        ]);
+        // إجمالي الرواتب المتبقية (غير المدفوعة) - نبدأ من الموظفين لضمان شمول من ليس لديهم سجل راتب
+        const activeWorkersList = await Worker.find({ isActive: true }).lean();
 
-        // الرواتب المتبقية حسب الموظف
-        const salariesByWorker = await Salary.aggregate([
-            {
-                $match: {
-                    ...salaryQuery,
-                    workerId: { $in: activeWorkerIds }
-                }
-            },
-            {
-                $lookup: {
-                    from: "workers",
-                    localField: "workerId",
-                    foreignField: "_id",
-                    as: "worker",
+        // جلب سجلات الرواتب للشهر المحدد
+        const salaryFilter = { year: parseInt(year || new Date().getFullYear()), month: parseInt(month || new Date().getMonth() + 1) };
+        const salaries = await Salary.find({
+            ...salaryFilter,
+            workerId: { $in: activeWorkersList.map(w => w._id) }
+        }).lean();
 
+        // حساب الرواتب المتبقية
+        let totalSalariesValue = 0;
+        let totalSalariesCountValue = 0;
+        const workerSalaries = [];
+
+        for (const worker of activeWorkersList) {
+            const salary = salaries.find(s => s.workerId.toString() === worker._id.toString());
+            let remainingSalary = 0;
+
+            if (salary) {
+                // إذا وجد سجل راتب
+                if (salary.isPaid) {
+                    remainingSalary = 0; // تم الدفع بالكامل
+                } else {
+                    // لم يتم الدفع، نأخذ الراتب النهائي (قد يكون 0 أو قيمة موجبة)
+                    // نستخدم القيمة الموجودة أو نعتبرها 0 إذا كانت غير موجودة (حماية)
+                    remainingSalary = salary.finalSalary ?? worker.basicSalary;
                 }
-            },
-            { $unwind: "$worker" },
-            {
-                $match: {
-                    "worker.isActive": true
-                }
-            },
-            {
-                $group: {
-                    _id: "$workerId",
-                    workerName: { $first: "$worker.name" },
-                    workerJob: { $first: "$worker.job" },
-                    totalSalary: { $sum: "$finalSalary" },
-                    basicSalary: { $first: "$worker.basicSalary" },
-                    paymentsCount: { $sum: 1 }
-                }
-            },
-            { $sort: { totalSalary: -1 } }
-        ]);
+            } else {
+                // لم يوجد سجل راتب، الراتب المتبقي هو الراتب الأساسي
+                remainingSalary = worker.basicSalary;
+            }
+
+            // نضيف فقط إذا كان هناك مبلغ مستحق
+            if (remainingSalary > 0) {
+                totalSalariesValue += remainingSalary;
+                totalSalariesCountValue++;
+
+                workerSalaries.push({
+                    _id: worker._id,
+                    workerName: worker.name,
+                    workerJob: worker.job,
+                    totalSalary: remainingSalary,
+                    basicSalary: worker.basicSalary,
+                    paymentsCount: 0 // يمكن تحديثه لاحقاً إذا احتجنا
+                });
+            }
+        }
+
+        // ترتيب تنازلي حسب المبلغ المتبقي
+        workerSalaries.sort((a, b) => b.totalSalary - a.totalSalary);
+
+        const totalSalaries = [{ total: totalSalariesValue, count: totalSalariesCountValue }];
+        const salariesByWorker = workerSalaries;
 
         // الرواتب حسب طريقة الدفع (من SalaryPayment - المدفوعة)
         let paymentMethodQuery = {};
