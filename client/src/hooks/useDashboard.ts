@@ -174,6 +174,8 @@ export const useDashboard = () => {
     }
   }
 
+  const [activeWorkersCount, setActiveWorkersCount] = useState<number>(0)
+
   // جلب عدد الموظفين النشطين
   const fetchActiveWorkers = async () => {
     try {
@@ -190,13 +192,7 @@ export const useDashboard = () => {
       if (response.ok) {
         const data = await response.json()
         if (data.success && Array.isArray(data.data)) {
-          setStats(prev => prev ? {
-            ...prev,
-            summary: {
-              ...prev.summary,
-              activeWorkersCount: data.data.length
-            }
-          } : null)
+          setActiveWorkersCount(data.data.length)
         }
       }
     } catch (error) {
@@ -313,5 +309,14 @@ export const useDashboard = () => {
     await fetchActiveWorkers();
   };
 
-  return { stats, salaryStats, admins, loading, error, filters, updateFilters, resetFilters, refetch }
+  // دمج activeWorkersCount مع stats عند الإرجاع
+  const statsWithWorkerCount = stats ? {
+    ...stats,
+    summary: {
+      ...stats.summary,
+      activeWorkersCount: activeWorkersCount || stats.summary.activeWorkersCount || salaryStats?.summary.salariesCount || 0
+    }
+  } : stats
+
+  return { stats: statsWithWorkerCount, salaryStats, admins, loading, error, filters, updateFilters, resetFilters, refetch }
 }
