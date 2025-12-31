@@ -303,7 +303,7 @@ const WorkerEdit = () => {
       const basic = Number(salaryForm.basicSalary);
       const days = Number(salaryForm.absenceDays);
       const deduction = Math.floor((basic / 30) * days);
-
+      console.log(deduction)
       // Update deductions field explicitly if it's purely an absence deduction
       // Or we can just let the backend handle the calculation while we display it?
       // User said: "In WorkerEdit, he will update absence days from here".
@@ -336,7 +336,7 @@ const WorkerEdit = () => {
 
       // Calculate final salary (matching backend logic)
       const finalSalary = basicSalary + incentives - deductions - withdrawals - advance - absenceValue
-
+     console.log(finalSalary)
       const salaryData = {
         workerId: worker?._id,
         year: salaryForm.year,
