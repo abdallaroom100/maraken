@@ -337,11 +337,11 @@ export const addAdvance = async (req, res) => {
         const { workerId, advance, notes } = req.body;
         const adminRole = req.admin?.role;
 
-        // Check if admin is moderator (not manager)
-        if (adminRole !== 'moderator') {
+        // Check if admin is moderator or manager
+        if (adminRole !== 'moderator' && adminRole !== 'manager') {
             return res.status(403).json({
                 success: false,
-                message: 'غير مصرح لك بإضافة الصرفة. هذه الميزة متاحة للأدمن العادي فقط'
+                message: 'غير مصرح لك بإضافة الصرفة. هذه الميزة متاحة للمشرفين والمدراء فقط'
             });
         }
 
@@ -583,10 +583,10 @@ export const updateAdvance = async (req, res) => {
         const { advance, notes } = req.body;
         const adminRole = req.admin?.role;
 
-        if (adminRole !== 'moderator') {
+        if (adminRole !== 'moderator' && adminRole !== 'manager') {
             return res.status(403).json({
                 success: false,
-                message: 'غير مصرح لك بتعديل الصرفة. هذه الميزة متاحة للأدمن العادي فقط'
+                message: 'غير مصرح لك بتعديل الصرفة. هذه الميزة متاحة للمشرفين والمدراء فقط'
             });
         }
 
@@ -688,11 +688,11 @@ export const deleteAdvance = async (req, res) => {
         const { id } = req.params;
         const adminRole = req.admin?.role;
 
-        // Check if admin is moderator
-        if (adminRole !== 'moderator') {
+        // Check if admin is moderator or manager
+        if (adminRole !== 'moderator' && adminRole !== 'manager') {
             return res.status(403).json({
                 success: false,
-                message: 'غير مصرح لك بحذف الصرفة. هذه الميزة متاحة للأدمن العادي فقط'
+                message: 'غير مصرح لك بحذف الصرفة. هذه الميزة متاحة للمشرفين والمدراء فقط'
             });
         }
 

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { useAuth } from '../hooks/useAuth'
 import './Employees.css'
 
 interface Worker {
@@ -19,6 +21,7 @@ interface WorkerAdvance {
 }
 
 const WorkersList = () => {
+  const { admin, getToken } = useAuth()
   const [workers, setWorkers] = useState<Worker[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -68,7 +71,7 @@ const WorkersList = () => {
               if (salary) {
                 advancesObj[worker._id] = {
                   advance: salary.advance || 0,
-                  finalSalary: salary.finalSalary || worker.basicSalary
+                  finalSalary: salary.finalSalary ?? worker.basicSalary
                 }
               } else {
                 advancesObj[worker._id] = {
@@ -128,6 +131,50 @@ const WorkersList = () => {
   // Navigate to add worker page
   const handleAddWorker = () => {
     navigate('/employees')
+  }
+
+  // Pay Salary
+  const handlePaySalary = async (worker: Worker) => {
+    const advanceData = workerAdvances[worker._id]
+    const currentFinalSalary = advanceData?.finalSalary || worker.basicSalary
+
+    if (currentFinalSalary <= 0) {
+      toast.error('لا يوجد راتب مستحق للدفع')
+      return
+    }
+
+    if (!confirm(`هل أنت متأكد من دفع الراتب المتبقي (${currentFinalSalary.toLocaleString()} ريال) للموظف ${worker.name}؟`)) {
+      return
+    }
+
+    const token = getToken?.() || admin?.token
+
+    try {
+      const response = await fetch('/api/workers/salaries/advance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          workerId: worker._id,
+          advance: currentFinalSalary,
+          notes: 'تسليم الراتب النهائي'
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('تم دفع الراتب بنجاح')
+        // Refresh data by re-fetching workers which triggers the useEffect
+        fetchWorkers()
+      } else {
+        toast.error(data.message || 'خطأ في دفع الراتب')
+      }
+    } catch (err) {
+      toast.error('خطأ في الاتصال بالخادم')
+    }
   }
 
   const totalBasicSalary = workers.reduce((sum, worker) => sum + worker.basicSalary, 0)
@@ -222,7 +269,7 @@ const WorkersList = () => {
               ) : (
                 workers.map((worker) => {
                   const advance = workerAdvances[worker._id]?.advance || 0
-                  const finalSalary = workerAdvances[worker._id]?.finalSalary || worker.basicSalary
+                  const finalSalary = workerAdvances[worker._id]?.finalSalary ?? worker.basicSalary
                   return (
                     <tr key={worker._id}>
                       <td style={{ textAlign: 'right', minWidth: 140 }} >
@@ -260,6 +307,14 @@ const WorkersList = () => {
                       </td>
                       <td>
                         <div className="btn-group  !flex-wrap md:!flex-nowrap">
+                          <button
+                            className="pay-btn"
+                            style={{ backgroundColor: '#48bb78', color: 'white', padding: '5px 10px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '14px', marginLeft: '5px' }}
+                            onClick={() => handlePaySalary(worker)}
+                            title="دفع الراتب النهائي"
+                          >
+                            دفع الراتب
+                          </button>
                           <button
                             className="edit-btn"
                             onClick={() => handleEdit(worker)}

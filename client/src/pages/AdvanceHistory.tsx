@@ -197,7 +197,7 @@ const AdvanceHistory = () => {
   };
 
   const handleEdit = (advance: AdvanceRecord) => {
-    if (!isModerator) return;
+    if (!isModerator && !isManager) return;
 
     setEditingId(advance._id);
     setEditForm({
@@ -212,7 +212,7 @@ const AdvanceHistory = () => {
   };
 
   const handleUpdate = async (id: string) => {
-    if (!isModerator) return;
+    if (!isModerator && !isManager) return;
 
     const advanceAmount = Number(editForm.advance);
     const advance = advances.find(a => a._id === id);
@@ -264,7 +264,7 @@ const AdvanceHistory = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isModerator) return;
+    if (!isModerator && !isManager) return;
     if (!confirm('هل أنت متأكد من حذف هذه الصرفة؟')) return;
 
     if (!token) {
@@ -417,12 +417,12 @@ const AdvanceHistory = () => {
                 <th>السنة</th>
                 {isManager && <th>المشرف</th>}
                 <th>آخر تحديث</th>
-                {isModerator && <th>الإجراءات</th>}
+                {(isModerator || isManager) && <th>الإجراءات</th>}
               </tr>
             </thead>
             <tbody>
               {advances.map(advance => {
-                const isEditing = isModerator && editingId === advance._id;
+                const isEditing = (isModerator || isManager) && editingId === advance._id;
                 const monthLabel = getMonthLabel(advance.month);
                 const lastUpdated = formatDate(advance.updatedAt || advance.createdAt);
                 const adminName = advance.adminName || 'غير محدد';
@@ -478,7 +478,7 @@ const AdvanceHistory = () => {
                       <td>{advance.year}</td>
                       {isManager && <td>{adminName}</td>}
                       <td>{lastUpdated}</td>
-                      {isModerator && (
+                      {(isModerator || isManager) && (
                         <td>
                           <div className="edit-actions">
                             <button className="save-btn" onClick={() => handleUpdate(advance._id)}>
@@ -526,7 +526,7 @@ const AdvanceHistory = () => {
                     <td>{advance.year}</td>
                     {isManager && <td>{adminName}</td>}
                     <td>{lastUpdated}</td>
-                    {isModerator && (
+                    {(isModerator || isManager) && (
                       <td>
                         <div className="action-buttons">
                           <button className="edit-button" onClick={() => handleEdit(advance)} title="تعديل">
